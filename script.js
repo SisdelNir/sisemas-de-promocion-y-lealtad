@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentParticipant: null,
         isSpinning: false,
         isMaster: false,
+        isQRLogin: false,
         qrReturnTo: 'sisdel',
         criteria: JSON.parse(localStorage.getItem('fe_criteria')) || { oro: 15000, plata: 10000, general: 0 },
         eventPeriod: JSON.parse(localStorage.getItem('fe_event_period')) || { start: '', end: '' }
@@ -328,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     state.isMaster = false;
+                    state.isQRLogin = true;
                     state.currentCompanyId = company.id;
                     localStorage.setItem('fe_current_company', company.id);
                     loadPrizesForCompany();
@@ -539,9 +541,15 @@ document.addEventListener('DOMContentLoaded', () => {
         criteriaManagementView.classList.add('hidden');
         appHeader.classList.add('hidden');
         
-        // Controlar visibilidad de botones de administración
-        // El engranaje de configuración ahora se muestra siempre para permitir ver el historial
-        btnConfig.classList.remove('hidden');
+        // Controlar visibilidad del engranaje:
+        // - Master: siempre visible
+        // - Empresa (login manual): visible para configurar premios
+        // - Acceso por QR (cliente): OCULTO — solo ve el formulario
+        if (state.isQRLogin) {
+            btnConfig.classList.add('hidden');
+        } else {
+            btnConfig.classList.remove('hidden');
+        }
 
         if (state.isMaster) {
             if(btnHistory) btnHistory.classList.add('hidden'); 
