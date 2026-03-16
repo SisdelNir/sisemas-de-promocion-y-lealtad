@@ -1,0 +1,1314 @@
+:root {
+    --primary: #00f2fe;
+    --secondary: #4facfe;
+    --accent: #ff007f;
+    --bg-dark: #0a0b1e;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-main: #ffffff;
+    --text-dim: #a0a0c0;
+    --success: #00ff88;
+    --font-main: 'Outfit', sans-serif;
+}
+
+.qr-label-top {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    font-weight: 800;
+    color: #888;
+    margin-bottom: 0.5rem;
+}
+
+/* Company Status Badges */
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.status-active {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+.status-inactive {
+    background: rgba(255, 0, 127, 0.15);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.company-row.inactive {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+}
+
+/* Action Buttons in Table */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+}
+
+.btn-edit:hover { color: var(--primary); border-color: var(--primary); }
+.btn-toggle:hover { color: #f39c12; border-color: #f39c12; }
+.btn-delete:hover { color: var(--accent); border-color: var(--accent); }
+
+.qr-warning-box {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 0.8; }
+}
+
+#qrcode-display img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.btn-close-view {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.btn-close-view:hover {
+    background: var(--accent);
+    transform: rotate(90deg);
+    border-color: transparent;
+}
+
+/* SISDEL QR View */
+.qr-container-main {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.qr-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 24px;
+    text-align: center;
+    color: #001f3f !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.qr-card h3 {
+    margin-bottom: 0.5rem;
+    color: #001f3f;
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.qr-card p {
+    font-size: 0.9rem;
+    color: #666 !important;
+    margin-bottom: 2rem;
+}
+
+#qrcode-display {
+    display: flex;
+    justify-content: center;
+}
+
+.qr-info {
+    font-weight: 800;
+    font-size: 1.4rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 2px dashed #00f2fe;
+    color: #001f3f !important;
+    letter-spacing: 2px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+.app-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Background Blurs */
+.bg-blur {
+    position: fixed;
+    width: 40vw;
+    height: 40vw;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.15;
+}
+
+.neon-blue {
+    top: -10%;
+    left: -10%;
+    background: var(--primary);
+}
+
+.neon-purple {
+    bottom: -10%;
+    right: -10%;
+    background: var(--accent);
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.logo-container h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.logo-container span {
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.logo-container img {
+    max-height: 60px;
+    max-width: 200px;
+    object-fit: contain;
+}
+
+.company-selector-container select {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 600;
+}
+
+.icon-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+}
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+h2 {
+    margin-bottom: 2rem;
+    font-weight: 600;
+}
+
+/* Login View */
+#login-view {
+    max-width: 400px;
+    margin: 4rem auto;
+    text-align: center;
+}
+
+.login-header p {
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+}
+
+.error-text {
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+/* Form Styles */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.input-group input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 1rem;
+    color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+}
+
+.form-footer {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    color: #001f3f;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.btn-danger {
+    background: rgba(255, 0, 80, 0.15);
+    border: 1px solid #ff0050;
+    color: #ff4f7b;
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: auto;
+    margin-top: 0;
+}
+.btn-danger:hover {
+    background: rgba(255, 0, 80, 0.35);
+    color: white;
+    transform: scale(1.03);
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Roulette Styles */
+.roulette-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.roulette-wrapper {
+    position: relative;
+    width: min(340px, 80vw);
+    height: min(340px, 80vw);
+    flex-shrink: 0;
+}
+
+.wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    border: 8px solid #222;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,255,255,0.1);
+    overflow: hidden;
+    transition: transform 6s cubic-bezier(0.1, 0, 0, 1);
+}
+
+.wheel::after {
+    content: '';
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background: #444;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+    z-index: 5;
+}
+
+.tier-indicator {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.4rem 1.4rem;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 20;
+    white-space: nowrap;
+}
+
+.tier-general { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #001f3f; border: 2px solid white; }
+.tier-plata   { background: linear-gradient(135deg, #bdc3c7, #2c3e50); color: white;   border: 2px solid #bdc3c7; }
+.tier-oro     { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #001f3f; border: 2px solid #f1c40f; box-shadow: 0 0 20px rgba(241,196,15,0.5); }
+
+.roulette-pointer {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 42px;
+    background: var(--accent);
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
+    z-index: 10;
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+}
+
+/* Controles al lado de la ruleta */
+.play-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-spin {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent), #aa0055);
+    border: 4px solid rgba(255,255,255,0.25);
+    color: white;
+    font-weight: 900;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(255,0,127,0.45);
+    transition: all 0.2s;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.btn-spin:hover:not(:disabled) {
+    transform: scale(1.08);
+    box-shadow: 0 12px 35px rgba(255,0,127,0.65);
+}
+
+.btn-spin:active  { transform: scale(0.9); }
+
+.btn-spin:disabled {
+    background: #555;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+
+/* Modals and Overlays */
+.overlay,
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.winner-card {
+    background: var(--bg-dark);
+    border: 2px solid var(--accent);
+    border-radius: 30px;
+    padding: 3rem;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 0 50px var(--accent);
+    animation: winnerPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.prize-display {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 2rem 0;
+    color: var(--success);
+    text-transform: uppercase;
+}
+
+/* Settings Modal Specifics */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.modal.hidden {
+    display: none;
+}
+.modal-content {
+    background: #15162c;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    position: relative;
+}
+
+/* X grande flotante para cerrar el modal */
+.modal-close-x {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    color: white;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.25s ease;
+    font-weight: 300;
+}
+.modal-close-x:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.5);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--glass-border);
+}
+
+.prizes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.prize-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.prize-row input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    padding: 0.8rem;
+    border-radius: 8px;
+    color: white;
+    flex-grow: 1;
+}
+
+/* Company Management */
+.companies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.company-row {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+.company-row:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.company-info {
+    display: flex;
+    gap: 1.2rem;
+    flex-grow: 1;
+}
+
+.company-item-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #000;
+    padding: 2px;
+}
+
+.company-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.company-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.company-name-row strong {
+    font-size: 1.1rem;
+    color: var(--primary);
+}
+
+.access-code-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 0, 127, 0.15);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+}
+
+.access-code-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-dim);
+}
+
+.access-code-value {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 2px;
+}
+
+.company-meta {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.5rem 1.5rem;
+}
+
+.add-company-form.expanded {
+    background: rgba(0,0,0,0.3);
+    padding: 2rem;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+}
+
+.file-input-wrapper-horizontal {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(0,0,0,0.2);
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* History View Specifics */
+#history-view {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.view-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+#btn-close-history {
+    width: auto;
+    margin-top: 0;
+}
+
+.table-container {
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+}
+
+#full-history-table th,
+#full-history-table td {
+    padding: 1.2rem;
+    text-align: left;
+}
+
+#full-history-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* History Table */
+.table-wrapper {
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    margin-top: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 1rem;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Animations */
+@keyframes winnerPop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .app-container {
+        padding: 1rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .roulette-wrapper {
+        width: 300px;
+        height: 300px;
+    }
+
+    .card {
+        padding: 1.5rem;
+    }
+}
+
+.highlight-autofill {
+    animation: highlightFade 2s ease-out;
+}
+
+@keyframes highlightFade {
+    0% { background: rgba(0, 242, 254, 0.2); border-color: var(--primary); }
+    100% { background: rgba(255, 255, 255, 0.03); border-color: var(--glass-border); }
+}
+
+
+/* Premium Form Styling for Criteria Management */
+#criteria-management-view {
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
+#criteria-management-view .view-header h2 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, white, var(--primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#criteria-management-view .settings-section p {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+#criteria-management-view .input-group label {
+    font-size: 1.1rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    display: block;
+}
+
+#criteria-management-view .input-group input {
+    font-size: 2.2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid var(--glass-border);
+    border-radius: 20px;
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    width: 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+#criteria-management-view .input-group input:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.2), inset 0 2px 10px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    outline: none;
+}
+
+#criteria-management-view .rule-item-list {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+}
+
+#criteria-management-view .rule-item-list p {
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 1.2rem;
+    text-align: left;
+}
+
+#criteria-management-view .rule-item-list ul li {
+    font-size: 1.2rem;
+    margin-bottom: 1.2rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+}
+
+#criteria-management-view .rule-item-list ul li span {
+    font-weight: 900;
+    margin-left: 10px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+/* ============================================
+   PRIZES MANAGEMENT — COMPACT ELEGANT DESIGN
+   ============================================ */
+
+#prizes-management-view {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header */
+.prizes-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.prizes-tier-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    padding: 4px 14px;
+    border-radius: 100px;
+    background: rgba(0, 242, 254, 0.15);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.prizes-tier-badge.tier-oro {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: #FFD700;
+    color: #FFD700;
+}
+
+.prizes-tier-badge.tier-plata {
+    background: rgba(192, 192, 192, 0.15);
+    border-color: #C0C0C0;
+    color: #C0C0C0;
+}
+
+.prizes-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: white;
+    margin: 0;
+}
+
+.prizes-header-actions {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 0.3rem;
+}
+
+.prizes-btn-back {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-dim);
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.prizes-btn-back:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.prizes-btn-save {
+    background: var(--primary);
+    border: none;
+    color: #001f3f;
+    padding: 0.6rem 1.4rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+}
+.prizes-btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5);
+}
+
+/* Prize List */
+.prizes-list-new {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 8px;
+    margin-bottom: 1rem;
+}
+
+.prizes-list-new::-webkit-scrollbar { width: 4px; }
+.prizes-list-new::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+}
+
+/* Each compact prize row */
+.prize-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 0.55rem 0.8rem;
+    transition: background 0.2s, transform 0.2s;
+    animation: prizeSlideIn 0.25s ease-out;
+}
+
+@keyframes prizeSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.prize-item:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateX(3px);
+}
+
+/* Drag handle */
+.prize-drag-handle {
+    color: rgba(255,255,255,0.15);
+    font-size: 1.1rem;
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+    transition: color 0.2s;
+    line-height: 1;
+}
+.prize-item:hover .prize-drag-handle {
+    color: rgba(255,255,255,0.4);
+}
+
+/* Small color dot (the picker) */
+.prize-color-dot {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.3);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.prize-color-dot:hover { transform: scale(1.15); }
+
+.prize-color-input {
+    position: absolute;
+    top: -30%;
+    left: -30%;
+    width: 160%;
+    height: 160%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0;
+}
+
+/* Prize name input */
+.prize-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    padding: 0.2rem 0.3rem;
+    transition: border-color 0.2s;
+}
+.prize-name-input:focus {
+    outline: none;
+    border-bottom-color: var(--primary);
+}
+.prize-name-input::placeholder { color: rgba(255,255,255,0.3); }
+
+/* Delete button */
+.prize-delete-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.25);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    line-height: 1;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+}
+.prize-delete-btn:hover {
+    color: #ff4f4f;
+    background: rgba(255,79,79,0.1);
+}
+
+/* Footer bar */
+.prizes-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.prizes-btn-add {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1.5px dashed rgba(0, 242, 254, 0.4);
+    color: var(--primary);
+    padding: 0.55rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.prizes-btn-add span {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+.prizes-btn-add:hover {
+    background: rgba(0, 242, 254, 0.08);
+    border-style: solid;
+}
+
+.prizes-count-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    font-weight: 500;
+}
+
+/* =====================================================
+   RESPONSIVE MÓVIL — todo el sistema adaptado a celular
+   ===================================================== */
+@media (max-width: 600px) {
+
+    body { font-size: 14px; }
+
+    /* Header */
+    .app-header {
+        padding: 0.6rem 1rem;
+    }
+    .header-logo { font-size: 1.3rem; }
+    .header-company { font-size: 0.75rem; }
+
+    /* Tarjetas */
+    .card {
+        padding: 1.2rem 1rem;
+        border-radius: 18px;
+        margin: 0.5rem;
+    }
+
+    /* Formularios */
+    .form-group input,
+    .form-group select {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+
+    /* Botón principal */
+    .btn-primary {
+        padding: 0.85rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* Ruleta: apilar verticalmente en móvil */
+    .roulette-container {
+        flex-direction: column;
+        gap: 1.2rem;
+        padding-top: 3rem; /* espacio para tier-indicator */
+    }
+
+    .roulette-wrapper {
+        width: min(290px, 88vw);
+        height: min(290px, 88vw);
+    }
+
+    /* Poner controles abajo en móvil */
+    .play-controls {
+        flex-direction: row;
+        gap: 1.5rem;
+    }
+
+    /* Botón GIRAR en móvil — un poco más grande para el dedo */
+    .btn-spin {
+        width: 80px;
+        height: 80px;
+        font-size: 0.9rem;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 96%;
+        max-height: 95vh;
+    }
+    .modal-body { padding: 1rem 0.8rem; }
+    .settings-actions button { font-size: 1rem !important; }
+
+    /* Historial */
+    .table-container { font-size: 0.75rem; }
+    .view-header { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+    .view-actions { width: 100%; justify-content: flex-start; }
+
+    /* Premios */
+    .prizes-management-view { padding: 1rem; }
+    .prizes-list-new { max-height: 55vh; }
+    .prize-name-input { font-size: 0.9rem; }
+
+    /* Winner card */
+    .winner-card { padding: 1.5rem 1rem; }
+    .prize-display { font-size: 1.6rem; }
+}
