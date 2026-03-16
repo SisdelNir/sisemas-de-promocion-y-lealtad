@@ -581,6 +581,11 @@ document.addEventListener('DOMContentLoaded', () => {
             appHeader.classList.remove('hidden');
             if (view === 'registration') {
                 registrationView.classList.remove('hidden');
+                // Ocultar el botón × si el cliente llegó por QR
+                if (btnCloseRegistration) {
+                    if (state.isQRLogin) btnCloseRegistration.classList.add('hidden');
+                    else btnCloseRegistration.classList.remove('hidden');
+                }
             } else if (view === 'roulette') {
                 rouletteView.classList.remove('hidden');
                 renderWheel();
