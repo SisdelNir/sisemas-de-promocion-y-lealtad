@@ -96,7 +96,7 @@
                 <button type="button" class="btn-close-view" id="btn-close-registration" title="Cerrar">&times;</button>
                 <h2>Registro de Participante</h2>
                 <form id="promo-form">
-                    <div class="form-grid">
+                    <div class="vertical-form">
                         <div class="input-group">
                             <label for="nit">NIT</label>
                             <input type="text" id="nit" required placeholder="Ej. 1234567-8">
@@ -113,7 +113,7 @@
                             <label for="total-consumption">TOTAL EN ESTA FACTURA</label>
                             <input type="number" id="total-consumption" step="0.01" required placeholder="Q 0.00">
                         </div>
-                        <div class="input-group" style="grid-column: span 2; margin-top: 1rem;">
+                        <div class="input-group" style="margin-top: 1rem;">
                             <label style="color: var(--secondary); font-size: 1rem; text-align: center; display: block; width: 100%; margin-bottom: 10px; font-weight: 800; letter-spacing: 1px;">TOTAL ACUMULADO (Hoy + Historial)</label>
                             <div id="total-accumulated-display" style="font-size: 2.5rem; font-weight: 900; color: #00f2fe; background: rgba(0,242,254,0.15); padding: 20px; border-radius: 15px; border: 2px solid #00f2fe; text-align: center; text-shadow: 0 0 15px rgba(0,242,254,0.5); box-shadow: inset 0 0 20px rgba(0,242,254,0.1);">Q 0.00</div>
                         </div>
