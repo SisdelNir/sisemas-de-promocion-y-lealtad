@@ -14,8 +14,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- ⚡ QR ANTI-FLASH: Ocultar login ANTES de que el DOM se renderice -->
+    <script>
+        if (new URLSearchParams(window.location.search).get('code')) {
+            document.documentElement.classList.add('qr-access');
+        }
+    </script>
     <style>
-        /* Estilos adicionales ligeros */
+        /* Si es acceso por QR, ocultar login inmediatamente */
+        html.qr-access #login-view { display: none !important; }
+
         @media print {
             body * { visibility: hidden; }
             #qr-view, #qr-view * { visibility: visible; }
