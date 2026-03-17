@@ -280,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const criteriaManagementView = document.getElementById('criteria-management-view');
     const btnCloseCriteria = document.getElementById('btn-close-criteria');
     const btnSaveCriteria = document.getElementById('btn-save-criteria');
+    const btnPrintQr = document.getElementById('btn-print-qr');
 
     let qrInstance = null;
 
@@ -1634,6 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     btnAddCompany.addEventListener('click', () => {
+        console.log("Btn clic detectado. Procesando empresa...");
         const name = newCompanyNameInput.value.trim();
         const nit = newCompanyNitInput.value.trim();
         const manager = newCompanyManagerInput.value.trim();
@@ -1641,10 +1643,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = newCompanyEmailInput.value.trim();
         const server = newCompanyServerInput.value.trim();
 
-        if (!name) return alert('Ingrese el nombre de la empresa');
+        if (!name) {
+            showToast('⚠️ El nombre de la empresa es obligatorio', 'error');
+            return;
+        }
 
         const file = newCompanyLogoInput.files[0];
         const processAdd = (logoBase64) => {
+            console.log("Llamando a addCompany para:", name);
             addCompany({
                 name,
                 nit,
@@ -1657,6 +1663,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (file) {
+            console.log("Leyendo logo...");
             const reader = new FileReader();
             reader.onload = (e) => processAdd(e.target.result);
             reader.readAsDataURL(file);
@@ -1684,57 +1691,90 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${L1}${L2}${L3}${N1}${N2}${N3}`;
     }
 
-    function addCompany(data) {
-        if (state.editingCompanyId) {
-            // MODO EDICIÓN
-            const idx = state.companies.findIndex(c => c.id === state.editingCompanyId);
-            if (idx !== -1) {
-                // Mantener ID y código original
-                state.companies[idx] = { 
-                    ...state.companies[idx], 
-                    ...data 
-                };
-                alert('Empresa actualizada correctamente');
-            }
-            state.editingCompanyId = null;
-            btnAddCompany.textContent = '+ Registrar Empresa en SISDEL';
-            btnAddCompany.style.background = '';
-        } else {
-            // MODO CREACIÓN
-            const newComp = {
-                id: 'comp_' + Date.now(),
-                ...data,
-                isActive: true, // Siempre activa al crear
-                code: generateAccessCode(data.name)
-            };
-            state.companies.push(newComp);
-            alert('Empresa registrada con éxito en SISDEL');
-        }
+    async function addCompany(data) {
+        const originalText = btnAddCompany.textContent;
+        btnAddCompany.disabled = true;
+        btnAddCompany.textContent = '⌛ GUARDANDO...';
 
-        saveCompanies();
-        
-        // Reset form
-        newCompanyNameInput.value = '';
-        newCompanyNitInput.value = '';
-        newCompanyManagerInput.value = '';
-        newCompanyPhoneInput.value = '';
-        newCompanyEmailInput.value = '';
-        newCompanyServerInput.value = '';
-        newCompanyLogoInput.value = '';
-        logoFileNameHint.textContent = 'Ningún archivo';
-        
-        renderCompaniesConfig();
-        updateHeaderCompany();
-        console.log("Estado de empresas guardado tras edición/creación");
+        try {
+            if (state.editingCompanyId) {
+                // MODO EDICIÓN
+                const idx = state.companies.findIndex(c => c.id === state.editingCompanyId);
+                if (idx !== -1) {
+                    state.companies[idx] = { 
+                        ...state.companies[idx], 
+                        ...data 
+                    };
+                    
+                    // Guardar local y nube
+                    saveCompaniesStateOnly(); // Guardar a localStorage
+                    const cloudSuccess = await saveCompaniesCloud();
+                    
+                    if (cloudSuccess) {
+                        showToast('✓ Empresa actualizada correctamente', 'success');
+                    } else {
+                        showToast('⚠️ Guardado localmente, error en la nube', 'warning');
+                    }
+                }
+                state.editingCompanyId = null;
+                btnAddCompany.textContent = '+ Registrar Empresa en SISDEL';
+                btnAddCompany.style.background = '';
+            } else {
+                // MODO CREACIÓN
+                const newComp = {
+                    id: 'comp_' + Date.now(),
+                    ...data,
+                    isActive: true, // Siempre activa al crear
+                    code: generateAccessCode(data.name)
+                };
+                
+                // Añadir al estado local primero
+                state.companies.push(newComp);
+                saveCompaniesStateOnly(); // Guardar a localStorage
+                
+                // Intentar guardar en la nube
+                console.log("Intentando sincronizar con la nube (Supabase)...");
+                const cloudSuccess = await saveCompaniesCloud();
+                
+                if (cloudSuccess) {
+                    showToast('✓ Empresa registrada con éxito en la NUBE', 'success');
+                } else {
+                    console.warn("Falla en nube, pero guardado localmente ok.");
+                    showToast('⚠️ Registrada localmente (Error en la Nube)', 'warning');
+                }
+            }
+
+            // Reset form
+            newCompanyNameInput.value = '';
+            newCompanyNitInput.value = '';
+            newCompanyManagerInput.value = '';
+            newCompanyPhoneInput.value = '';
+            newCompanyEmailInput.value = '';
+            newCompanyServerInput.value = '';
+            newCompanyLogoInput.value = '';
+            logoFileNameHint.textContent = 'Ningún archivo';
+            
+            renderCompaniesConfig();
+            updateHeaderCompany();
+        } catch (err) {
+            console.error('Error en addCompany:', err);
+            showToast('❌ Error al guardar: ' + err.message, 'error');
+        } finally {
+            btnAddCompany.disabled = false;
+            btnAddCompany.textContent = state.editingCompanyId ? '💾 GUARDAR CAMBIOS' : '+ Registrar Empresa en SISDEL';
+        }
     }
 
-    function saveCompanies() {
+    function saveCompaniesStateOnly() {
         try {
             localStorage.setItem('fe_companies', JSON.stringify(state.companies));
         } catch (e) {
             console.warn("localStorage sync blocked", e);
         }
-        // Sincronizar a Supabase (sin bloquear)
+    }
+
+    function saveCompanies() {
+        saveCompaniesStateOnly();
         saveCompaniesCloud();
     }
 
@@ -1754,14 +1794,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     logo: c.logo || null,
                     is_active: c.isActive !== false
                 }));
-            if (toUpsert.length === 0) return;
+            
+            if (toUpsert.length === 0) return true;
+
             const { error } = await supabaseClient
                 .from('empresas')
                 .upsert(toUpsert, { onConflict: 'id' });
-            if (error) throw error;
+            
+            if (error) {
+                console.error('Error de Supabase (Empresas):', error);
+                throw new Error(error.message);
+            }
+            
             console.log('Empresas sincronizadas en la nube:', toUpsert.length);
+            return true;
         } catch (e) {
             console.warn('Error sincronizando empresas a la nube:', e.message);
+            return false;
         }
     }
 
