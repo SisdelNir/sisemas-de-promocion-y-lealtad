@@ -1254,19 +1254,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnDownloadQr) {
         btnDownloadQr.addEventListener('click', () => {
-            const canvas = qrcodeDisplay.querySelector('canvas');
-            if (canvas) {
-                const url = canvas.toDataURL('image/png');
-                const a = document.createElement('a');
-                a.href = url;
-                const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                a.download = `qr_ruleta_${name || 'acceso'}.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast && showToast('Descargando QR...', 'success');
+            const qrCard = document.querySelector('.qr-card');
+            if (qrCard && typeof html2canvas !== 'undefined') {
+                // Ocultar el botón de descarga temporalmente para la "foto"
+                btnDownloadQr.style.display = 'none';
+                
+                html2canvas(qrCard, {
+                    backgroundColor: '#ffffff', // Fondo negro transparente no aplica bien
+                    scale: 2, // Mejor resolución
+                    logging: false
+                }).then(canvas => {
+                    // Restaurar botón
+                    btnDownloadQr.style.display = 'flex';
+
+                    const url = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                    a.download = `qr_completo_${name || 'acceso'}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast && showToast('Descargando imagen completa...', 'success');
+                }).catch(err => {
+                    console.error("Error generando imagen QR:", err);
+                    btnDownloadQr.style.display = 'flex';
+                    alert("Error al descargar la imagen completa.");
+                });
             } else {
-                alert('El código QR aún no se ha generado completamente.');
+                alert('La librería para capturar imágenes aún no ha cargado. Refresque la página.');
             }
         });
     }
