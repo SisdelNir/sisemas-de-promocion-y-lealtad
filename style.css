@@ -274,9 +274,13 @@ header {
 }
 
 .logo-container h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: -1px;
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    opacity: 0.9;
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
 }
 
 .logo-container span {

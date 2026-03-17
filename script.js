@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTier: localStorage.getItem('fe_current_tier') || 'general',
         allPrizes: { general: [], plata: [], oro: [] },
         companies: (JSON.parse(localStorage.getItem('fe_companies')) || [
-            { id: 'default', name: 'Full Energy', logo: null, nit: 'N/A', manager: 'Sistema', phone: 'N/A', email: 'v1.0', code: 'FEA001', isActive: true }
+            { id: 'default', name: 'SISDEL', logo: null, nit: 'N/A', manager: 'Sistema', phone: 'N/A', email: 'v1.0', code: 'FEA001', isActive: true }
         ]).map(c => {
             if (c.id === 'default' && !c.code) c.code = 'FEA001';
             if (!c.code) c.code = generateAccessCode(c.name);
@@ -260,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const invoiceNumInput = document.getElementById('invoice-number');
     const nitInput = document.getElementById('nit');
     const pilotNameInput = document.getElementById('pilot-name');
+    const phoneInput = document.getElementById('phone');
     const totalConsumptionInput = document.getElementById('total-consumption');
     const totalAccumulatedDisplay = document.getElementById('total-accumulated-display');
     const btnCloseRegistration = document.getElementById('btn-close-registration');
@@ -286,6 +287,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     async function init() {
+        // Migración: Asegurar que SISDEL sea el nombre para la empresa default
+        state.companies = state.companies.map(c => {
+            if (c.id === 'default' && (c.name === 'Full Energy' || !c.name)) {
+                return { ...c, name: 'SISDEL' };
+            }
+            return c;
+        });
+
         // ⚡ DETECCIÓN INMEDIATA DE QR — ANTES de cualquier llamada a Supabase
         // Si hay ?code= en la URL, mostrar el formulario de registro AHORA
         const urlParamsEarly = new URLSearchParams(window.location.search);
@@ -554,7 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mainLogoContainer.appendChild(img);
         } else {
             const h1 = document.createElement('h1');
-            h1.innerHTML = `${company.name.split(' ')[0]} <span>${company.name.split(' ').slice(1).join(' ')}</span>`;
+            h1.id = 'company-display-name';
+            h1.textContent = company.name;
             mainLogoContainer.appendChild(h1);
         }
     }
@@ -666,8 +676,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateRealTimeAccumulated();
 
             if (!nit || nit === 'C/F') {
-                pilotNameInput.value = ''; // Limpiar si borran el NIT
-                return; 
+                pilotNameInput.value = '';
+                if (phoneInput) phoneInput.value = '';
+                return;
             }
 
             // 1. Buscar primero en la tabla maestros de clientes permanentemente
@@ -675,8 +686,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (client && client.nombre) {
                 if (pilotNameInput.value !== client.nombre) {
                     pilotNameInput.value = client.nombre;
+                    if (phoneInput && client.telefono) phoneInput.value = client.telefono;
+                    
                     pilotNameInput.classList.add('highlight-autofill');
-                    setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
+                    if (phoneInput) phoneInput.classList.add('highlight-autofill');
+                    
+                    setTimeout(() => {
+                        pilotNameInput.classList.remove('highlight-autofill');
+                        if (phoneInput) phoneInput.classList.remove('highlight-autofill');
+                    }, 2000);
                     showToast('✓ Cliente detectado', 'success');
                 }
                 return;
@@ -688,13 +706,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cleanName = existing.piloto.split(' (NIT:')[0];
                 if (pilotNameInput.value !== cleanName) {
                     pilotNameInput.value = cleanName;
+                    if (phoneInput && existing.telefono) phoneInput.value = existing.telefono;
+                    
                     pilotNameInput.classList.add('highlight-autofill');
-                    setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
+                    if (phoneInput) phoneInput.classList.add('highlight-autofill');
+                    
+                    setTimeout(() => {
+                        pilotNameInput.classList.remove('highlight-autofill');
+                        if (phoneInput) phoneInput.classList.remove('highlight-autofill');
+                    }, 2000);
                     showToast('✓ Cliente frecuente detectado', 'success');
                 }
-            } else {
-                // Si no hay correspondencia mientras escriben, no sobrescribimos por si el cliente
-                // quiere escribir un nombre nuevo manual para este NIT nuevo
             }
         });
     }
@@ -759,6 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nitInputStr = document.getElementById('nit').value.trim().toUpperCase();
         const nit = nitInputStr || 'C/F';
         const pilotName = document.getElementById('pilot-name').value.trim();
+        const phone = document.getElementById('phone') ? document.getElementById('phone').value.trim() : '';
         const consumption = document.getElementById('total-consumption').value.trim();
 
         // 1. VERIFICAR DUPLICADO en estado local primero (sin red)
@@ -849,9 +872,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // 0. Asegurar que el CLIENTE existe en la tabla clientes (NIT es PK)
         // Incluimos C/F para que la relación de base de datos no falle
         try {
+            const clientUpdate = {
+                nit: nit,
+                nombre: (nit === 'C/F' ? 'Consumidor Final' : pilotName)
+            };
+            if (phone) clientUpdate.telefono = phone;
+
             await supabaseClient
                 .from('clientes')
-                .upsert([{ nit: nit, nombre: (nit === 'C/F' ? 'Consumidor Final' : pilotName) }], { onConflict: 'nit' });
+                .upsert([clientUpdate], { onConflict: 'nit' });
         } catch (err) {
             console.error('Error in upsert client:', err);
         }
@@ -866,6 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
             factura: invoiceNum,
             nit: nit,
             piloto: pilotName,
+            telefono: phone,
             empresa: currentCompany ? currentCompany.name : 'Full Energy',
             consumo: consumption,
             fecha: new Date().toLocaleString(),

@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS clientes (
     nit TEXT PRIMARY KEY,
     nombre TEXT NOT NULL,
+    telefono TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -13,6 +14,7 @@ CREATE TABLE IF NOT EXISTS participantes (
     factura TEXT UNIQUE NOT NULL,
     piloto TEXT NOT NULL,
     nit TEXT REFERENCES clientes(nit),
+    telefono TEXT,
     empresa TEXT,
     consumo TEXT,
     premio TEXT,
