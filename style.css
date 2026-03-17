@@ -164,25 +164,26 @@
 
 .btn-download-qr {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: #2b6cb0;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.25);
     color: white;
-    border: none;
-    width: 36px;
-    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     transition: all 0.2s ease;
 }
 
 .btn-download-qr:hover {
-    background: #1a4971;
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.45);
+    transform: translateY(-50%) scale(1.1);
 }
 
 .btn-download-qr svg {
