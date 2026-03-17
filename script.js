@@ -68,9 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPrizesForCompany() {
         ['general', 'plata', 'oro'].forEach(tier => {
             const saved = localStorage.getItem(getPrizesKey(tier));
-            state.allPrizes[tier] = saved ? JSON.parse(saved) : [...DEFAULT_PRIZES[tier].map(p => ({...p}))];
+            try {
+                const parsed = saved ? JSON.parse(saved) : null;
+                if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+                    state.allPrizes[tier] = parsed;
+                } else {
+                    // Cargar de DEFAULT_PRIZES si no hay nada o está vacío
+                    state.allPrizes[tier] = [...DEFAULT_PRIZES[tier].map(p => ({...p}))];
+                }
+            } catch (e) {
+                state.allPrizes[tier] = [...DEFAULT_PRIZES[tier].map(p => ({...p}))];
+            }
         });
-        state.prizes = state.allPrizes[state.currentTier];
+        state.prizes = state.allPrizes[state.currentTier] || state.allPrizes.general;
     }
 
     async function loadPrizesFromCloud() {
@@ -292,6 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchCompaniesCloud()
         ]);
 
+        // ⚡ Cargar los premios desde la nube tras cargar las empresas
+        await loadPrizesFromCloud();
+
         // CORRECCIÓN CRITICAL: Si el periodo guardado empieza hoy o después, forzar marzo para capturar historial
         const marchStart = "2026-03-01";
         if (!state.eventPeriod.start || state.eventPeriod.start > marchStart) {
@@ -333,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => accessCodeInput.focus(), 150);
             }
             renderWheel();
-        }, 50);
+        }, 120);
 
         if (window.location.protocol === 'file:') {
             console.warn("ATENCIÓN: Sistema en modo local (file://).");
@@ -834,11 +847,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderWheel() {
         wheel.innerHTML = '';
-        const numSegments = state.prizes.length;
+        const numSegments = state.prizes ? state.prizes.length : 0;
+        
+        if (numSegments === 0) {
+            console.warn("No hay premios para renderizar la ruleta.");
+            wheel.style.background = "#333"; // Fondo sólido si no hay premios
+            return;
+        }
+
         const segmentAngle = 360 / numSegments;
-        const gradient = state.prizes.map((p, i) =>
-            `${p.color} ${(i * 360) / numSegments}deg ${((i + 1) * 360) / numSegments}deg`
-        ).join(', ');
+        const gradient = state.prizes.map((p, i) => {
+            const color = p.color || '#333';
+            return `${color} ${(i * 360) / numSegments}deg ${((i + 1) * 360) / numSegments}deg`;
+        }).join(', ');
 
         wheel.style.background = `conic-gradient(${gradient})`;
 
@@ -846,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fontSize = numSegments <= 6  ? '0.8rem'
                        : numSegments <= 10 ? '0.7rem'
                        : numSegments <= 16 ? '0.58rem'
-                       : '0.5rem';
+                       : '0.45rem';
 
         // Ancho del arco por segmento (en px) a radio medio ≈ 90px
         const arcWidth = Math.floor((2 * Math.PI * 90) / numSegments);
@@ -953,11 +974,18 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isSpinning = true;
         btnSpin.disabled = true;
 
-        const numPrizes = state.prizes.length;
+        const numPrizes = state.prizes ? state.prizes.length : 0;
+        if (numPrizes === 0) {
+            alert("Error: No hay premios configurados para esta ruleta.");
+            state.isSpinning = false;
+            btnSpin.disabled = false;
+            return;
+        }
+
         const prizeIndex = Math.floor(Math.random() * numPrizes);
         const prize = state.prizes[prizeIndex];
         const segmentAngle = 360 / numPrizes;
-        const extraSpins = 5 + Math.floor(Math.random() * 5);
+        const extraSpins = 7 + Math.floor(Math.random() * 5); // Más vueltas para mejor efecto
         const rotation = (extraSpins * 360) + (360 - (prizeIndex * segmentAngle) - (segmentAngle / 2));
         wheel.style.transform = `rotate(${rotation}deg)`;
 
@@ -999,7 +1027,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnSpin.addEventListener('click', handleSpin);
-    btnSpin.addEventListener('touchstart', handleSpin, { passive: false });
+    // touchstart solo si es necesario, pero click suele bastar y es más seguro contra doble-tap
+    // btnSpin.addEventListener('touchstart', handleSpin, { passive: false });
 
     btnDone.addEventListener('click', () => {
         winnerOverlay.classList.add('hidden');

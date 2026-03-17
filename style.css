@@ -612,7 +612,9 @@ h2 {
     justify-content: center;
 }
 
-.hidden {
+.hidden, 
+body .hidden, 
+html .hidden {
     display: none !important;
 }
 
