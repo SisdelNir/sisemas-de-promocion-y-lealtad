@@ -558,6 +558,8 @@ h2 {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+    position: relative;
+    z-index: 100;
 }
 
 .btn-spin {
@@ -574,6 +576,10 @@ h2 {
     transition: all 0.2s;
     line-height: 1.2;
     text-align: center;
+    position: relative;
+    z-index: 101;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn-spin:hover:not(:disabled) {

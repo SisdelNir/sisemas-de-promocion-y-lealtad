@@ -942,7 +942,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
 
-    btnSpin.addEventListener('click', () => {
+    function handleSpin(e) {
+        if (e) e.preventDefault();
         if (state.isSpinning) return;
         state.isSpinning = true;
         btnSpin.disabled = true;
@@ -989,8 +990,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             await fetchParticipants();
-        }, 6100);
-    });
+        }, 6000);
+    }
+
+    btnSpin.addEventListener('click', handleSpin);
+    btnSpin.addEventListener('touchstart', handleSpin, { passive: false });
 
     btnDone.addEventListener('click', () => {
         winnerOverlay.classList.add('hidden');
