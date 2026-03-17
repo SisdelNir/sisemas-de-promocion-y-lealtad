@@ -302,8 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (codeParam) {
                 console.log("Detectado acceso por QR. Código:", codeParam);
                 
+                // 1. Buscar empresa por código
                 let company = state.companies.find(c => c.code === codeParam);
                 
+                // 2. Si no se encontró, crear empresa temporal con el nombre del QR
                 if (!company && nameParam) {
                     company = {
                         id: 'comp_qr_' + Date.now(),
@@ -314,14 +316,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         manager: 'Auto-Registro QR',
                         phone: 'N/A',
                         email: 'N/A',
-                        server: '' 
+                        server: '',
+                        isActive: true
                     };
                     state.companies.push(company);
                     saveCompanies();
                 }
 
+                // 3. Último recurso: si aún no hay empresa, usar la empresa default
+                if (!company) {
+                    company = state.companies.find(c => c.id === 'default') || state.companies[0];
+                    if (company) {
+                        company = { ...company, code: codeParam, isActive: true };
+                    }
+                }
+
+                // 4. Con empresa encontrada → siempre ir al formulario de registro
                 if (company) {
-                    // Verificar si la empresa está activa
+                    // Solo bloquear si explícitamente está INACTIVA
                     if (company.isActive === false) {
                         alert('Esta empresa se encuentra temporalmente INACTIVA. Contacte al administrador.');
                         showView('login');
@@ -337,19 +349,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     window.history.replaceState({}, document.title, window.location.pathname);
                     showView('registration');
-                    console.log("Formulario de registro forzado por QR para:", company.name);
+                    console.log("✅ Formulario de registro directo por QR para:", company.name);
                 } else {
-                    showView('login');
-                    setTimeout(() => accessCodeInput.focus(), 100);
+                    // Caso extremo: sin empresa → igual mostrar formulario con default
+                    state.isQRLogin = true;
+                    showView('registration');
                 }
             } else {
-                console.log("No QR parameters found, showing login view.");
+                // Sin código QR → mostrar login (acceso manual del operador)
                 showView('login'); 
                 setTimeout(() => accessCodeInput.focus(), 150);
             }
             
             renderWheel();
         }, 150);
+
 
         if (window.location.protocol === 'file:') {
             console.warn("ATENCIÓN: Sistema en modo local (file://).");
