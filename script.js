@@ -220,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const qrCompanyName = document.getElementById('qr-company-name');
     const qrAccessCodeText = document.getElementById('qr-access-code-text');
     const btnCloseQr = document.getElementById('btn-close-qr');
+    const btnDownloadQr = document.getElementById('btn-download-qr');
     const invoiceNumInput = document.getElementById('invoice-number');
     const nitInput = document.getElementById('nit');
     const pilotNameInput = document.getElementById('pilot-name');
@@ -1250,6 +1251,25 @@ document.addEventListener('DOMContentLoaded', () => {
             showView('sisdel');
         }
     });
+
+    if (btnDownloadQr) {
+        btnDownloadQr.addEventListener('click', () => {
+            const canvas = qrcodeDisplay.querySelector('canvas');
+            if (canvas) {
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                a.download = `qr_ruleta_${name || 'acceso'}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast && showToast('Descargando QR...', 'success');
+            } else {
+                alert('El código QR aún no se ha generado completamente.');
+            }
+        });
+    }
 
     if (btnConsumptionSummary) {
         btnConsumptionSummary.addEventListener('click', () => {
