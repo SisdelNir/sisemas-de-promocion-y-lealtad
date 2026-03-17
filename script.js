@@ -90,15 +90,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 .from('premios')
                 .select('*')
                 .eq('empresa_code', code);
-            if (error || !data || data.length === 0) return;
+            // Si la tabla no existe o no hay datos, simplemente salir sin tocar los premios actuales
+            if (error) {
+                console.warn('Tabla premios no disponible:', error.message);
+                return;
+            }
+            if (!data || data.length === 0) {
+                console.log('Sin premios en la nube, usando premios locales/por defecto.');
+                return;
+            }
             data.forEach(row => {
                 if (row.tier && row.prizes) {
                     const prizes = typeof row.prizes === 'string' ? JSON.parse(row.prizes) : row.prizes;
-                    state.allPrizes[row.tier] = prizes;
-                    localStorage.setItem(getPrizesKey(row.tier), JSON.stringify(prizes));
+                    // Solo aceptar si es un array válido y no está vacío
+                    if (Array.isArray(prizes) && prizes.length > 0) {
+                        state.allPrizes[row.tier] = prizes;
+                        localStorage.setItem(getPrizesKey(row.tier), JSON.stringify(prizes));
+                    }
                 }
             });
-            state.prizes = state.allPrizes[state.currentTier];
+            state.prizes = state.allPrizes[state.currentTier] || state.allPrizes.general;
             renderWheel();
             console.log('Premios cargados desde la nube para empresa:', code);
         } catch (e) {
@@ -295,15 +306,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 1. Cargar configuraciones en paralelo (sin bloquear la UI)
-        const [, , ] = await Promise.all([
+        // 🔑 PASO CRÍTICO: Cargar premios locales/defaults PRIMERO
+        // Esto asegura que SIEMPRE haya premios aunque la nube falle
+        loadPrizesForCompany();
+        updateHeaderCompany();
+
+        // Renderizar la ruleta INMEDIATAMENTE con premios por defecto
+        // para que el usuario no vea un disco gris
+        renderWheel();
+
+        const today = new Date().toLocaleDateString();
+        if (autoDateSpan) autoDateSpan.textContent = today;
+
+        // Decidir vista final RÁPIDO (antes de esperar a la nube)
+        if (state.isQRLogin) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            showView('registration');
+            console.log("✅ QR: mostrando formulario de registro para empresa:", state.currentCompanyId);
+        } else {
+            showView('login');
+            setTimeout(() => accessCodeInput.focus(), 150);
+        }
+
+        // 🌐 Ahora cargar datos de la nube EN SEGUNDO PLANO (no bloquea UI)
+        Promise.all([
             fetchEventPeriodCloud(),
             fetchCriteriaCloud(),
             fetchCompaniesCloud()
-        ]);
-
-        // ⚡ Cargar los premios desde la nube tras cargar las empresas
-        await loadPrizesFromCloud();
+        ]).then(() => {
+            // Después de cargar empresas, intentar actualizar premios desde la nube
+            return loadPrizesFromCloud();
+        }).then(() => {
+            // Actualizar la ruleta si la nube devolvió premios mejores
+            renderWheel();
+        }).catch(e => {
+            console.warn('Error cargando datos de la nube (usando datos locales):', e.message);
+        });
 
         // CORRECCIÓN CRITICAL: Si el periodo guardado empieza hoy o después, forzar marzo para capturar historial
         const marchStart = "2026-03-01";
@@ -316,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('fe_event_period', JSON.stringify(state.eventPeriod));
         }
 
-        // Cargar en los inputs de configuración SIEMPRE al inicio
+        // Cargar en los inputs de configuración
         if (configEventStart) configEventStart.value = state.eventPeriod.start;
         if (configEventEnd) configEventEnd.value = state.eventPeriod.end;
         if (historyDateStart) historyDateStart.value = state.eventPeriod.start;
@@ -324,29 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (consumptionDateStart) consumptionDateStart.value = state.eventPeriod.start;
         if (consumptionDateEnd) consumptionDateEnd.value = state.eventPeriod.end;
 
-        const today = new Date().toLocaleDateString();
-        if (autoDateSpan) autoDateSpan.textContent = today;
-
-        loadPrizesForCompany();
-        updateHeaderCompany();
-        
-        // Cargar historial en segundo plano — no bloquea la UI
+        // Cargar historial en segundo plano
         fetchParticipants();
-
-        // Decidir vista final
-        setTimeout(() => {
-            if (state.isQRLogin) {
-                // Ya está configurado, solo mostrar el formulario
-                window.history.replaceState({}, document.title, window.location.pathname);
-                showView('registration');
-                console.log("✅ QR: mostrando formulario de registro para empresa:", state.currentCompanyId);
-            } else {
-                // Login manual del operador
-                showView('login');
-                setTimeout(() => accessCodeInput.focus(), 150);
-            }
-            renderWheel();
-        }, 120);
 
         if (window.location.protocol === 'file:') {
             console.warn("ATENCIÓN: Sistema en modo local (file://).");
