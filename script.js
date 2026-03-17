@@ -742,11 +742,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const endStr = state.eventPeriod.end || '9999-12-31';
 
             const nitNorm = normalizeNIT(nit);
+            const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
+            const currentCompanyName = currentCompany ? currentCompany.name : 'Full Energy';
+
             const previousInPeriod = state.participants.filter(p => {
                 // Compatible con ambos nombres de columna por si acaso
                 const pIdentNorm = normalizeNIT(p.placa || p.nit || '');
                 if (!pIdentNorm || pIdentNorm !== nitNorm) return false;
                 
+                // Filtrar por EMPRESA para que el acumulado sea individual por sucursal/marca
+                const isSameCompany = (p.empresa === currentCompanyName);
+                if (!isSameCompany) return false;
+
                 let pDateObj = safeParseDate(p.created_at || p.fecha);
                 const pad = (n) => n.toString().padStart(2, '0');
                 const pDateStr = `${pDateObj.getFullYear()}-${pad(pDateObj.getMonth() + 1)}-${pad(pDateObj.getDate())}`;
@@ -823,10 +830,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!isCF) {
             const nitNorm = normalizeNIT(nit);
+            const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
+            const currentCompanyName = currentCompany ? currentCompany.name : 'Full Energy';
             
             const previousInPeriod = state.participants.filter(p => {
                 const pIdentNorm = normalizeNIT(p.placa || p.nit || '');
                 if (!pIdentNorm || pIdentNorm !== nitNorm) return false;
+                
+                // Filtrar por EMPRESA para que el acumulado sea individual por sucursal/marca
+                const isSameCompany = (p.empresa === currentCompanyName);
+                if (!isSameCompany) return false;
                 
                 let pDateObj = safeParseDate(p.created_at || p.fecha);
                 const pad = (n) => n.toString().padStart(2, '0');
