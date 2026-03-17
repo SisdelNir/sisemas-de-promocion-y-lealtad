@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.currentTier = selectedTier;
         state.prizes = state.allPrizes[selectedTier];
-        localStorage.setItem('fe_current_tier', selectedTier);
+        try { localStorage.setItem('fe_current_tier', selectedTier); } catch(e){}
 
         const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
 
@@ -1040,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Respaldo local
                 const pending = JSON.parse(localStorage.getItem('fe_pending_records') || '[]');
                 pending.push(recordToSave);
-                localStorage.setItem('fe_pending_records', JSON.stringify(pending));
+                try { localStorage.setItem('fe_pending_records', JSON.stringify(pending)); } catch(e){}
                 showToast('⚠️ Sin conexión. Registro guardado localmente.', 'error');
             } else {
                 // Subir pendientes anteriores si los hay
@@ -1098,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             state.isMaster = false;
             state.currentCompanyId = company.id;
-            localStorage.setItem('fe_current_company', company.id);
+            try { localStorage.setItem('fe_current_company', company.id); } catch(e){}
             loadPrizesForCompany(); // Cargar premios de la empresa
             updateHeaderCompany();
             loginError.classList.add('hidden');
@@ -1219,7 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const generalVal = parseFloat(document.getElementById('criteria-general').value) || 0;
             
             state.criteria = { oro: oroVal, plata: plataVal, general: generalVal };
-            localStorage.setItem('fe_criteria', JSON.stringify(state.criteria));
+            try { localStorage.setItem('fe_criteria', JSON.stringify(state.criteria)); } catch(e){}
             
             // Sincronizar con la nube
             saveCriteriaCloud(state.criteria);
@@ -1278,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPrizesGeneral) {
         btnPrizesGeneral.addEventListener('click', () => {
             state.currentTier = 'general';
-            localStorage.setItem('fe_current_tier', 'general');
+            try { localStorage.setItem('fe_current_tier', 'general'); } catch(e){}
             loadPrizesForCompany(); // Recargar desde localStorage
             state.prizes = state.allPrizes.general;
             settingsModal.classList.add('hidden');
@@ -1288,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPrizesPlata) {
         btnPrizesPlata.addEventListener('click', () => {
             state.currentTier = 'plata';
-            localStorage.setItem('fe_current_tier', 'plata');
+            try { localStorage.setItem('fe_current_tier', 'plata'); } catch(e){}
             loadPrizesForCompany(); // Recargar desde localStorage
             state.prizes = state.allPrizes.plata;
             settingsModal.classList.add('hidden');
@@ -1298,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnPrizesOro) {
         btnPrizesOro.addEventListener('click', () => {
             state.currentTier = 'oro';
-            localStorage.setItem('fe_current_tier', 'oro');
+            try { localStorage.setItem('fe_current_tier', 'oro'); } catch(e){}
             loadPrizesForCompany(); // Recargar desde localStorage
             state.prizes = state.allPrizes.oro;
             settingsModal.classList.add('hidden');
@@ -1493,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 state.allPrizes[state.currentTier] = [...state.prizes];
-                localStorage.setItem(getPrizesKey(state.currentTier), JSON.stringify(state.prizes));
+                try { localStorage.setItem(getPrizesKey(state.currentTier), JSON.stringify(state.prizes)); } catch(e){}
                 savePrizesCloud(state.currentTier, state.prizes);
                 renderWheel();
                 showToast('✓ Premios ' + state.currentTier.toUpperCase() + ' guardados correctamente');
@@ -1584,7 +1584,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (confirm(`¿Estás seguro de eliminar ${state.companies[idx].name}?`)) {
                     if (state.companies[idx].id === state.currentCompanyId) {
                         state.currentCompanyId = 'default';
-                        localStorage.setItem('fe_current_company', 'default');
+                        try { localStorage.setItem('fe_current_company', 'default'); } catch(e){}
                     }
                     state.companies.splice(idx, 1);
                     saveCompanies();
@@ -1729,7 +1729,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveCompanies() {
-        localStorage.setItem('fe_companies', JSON.stringify(state.companies));
+        try {
+            localStorage.setItem('fe_companies', JSON.stringify(state.companies));
+        } catch (e) {
+            console.warn("localStorage sync blocked", e);
+        }
         // Sincronizar a Supabase (sin bloquear)
         saveCompaniesCloud();
     }
@@ -1802,7 +1806,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && !error) {
                 state.eventPeriod.start = data.valor_inicio || '';
                 state.eventPeriod.end = data.valor_fin || '';
-                localStorage.setItem('fe_event_period', JSON.stringify(state.eventPeriod));
+                try { localStorage.setItem('fe_event_period', JSON.stringify(state.eventPeriod)); } catch(e){}
                 console.log("Periodo cargado desde la nube:", state.eventPeriod);
                 
                 // Actualizar inputs si existen
@@ -1829,7 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         plata: parseFloat(data.valor_plata) || 10000, 
                         general: parseFloat(data.valor_general) || 0 
                     };
-                    localStorage.setItem('fe_criteria', JSON.stringify(state.criteria));
+                    try { localStorage.setItem('fe_criteria', JSON.stringify(state.criteria)); } catch(e){}
                     console.log("Criterios cargados desde la nube:", state.criteria);
 
                     // Actualizar inputs de configuración de criterios si están visibles
