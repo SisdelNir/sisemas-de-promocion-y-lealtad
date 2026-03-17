@@ -617,20 +617,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // ACTUALIZACIÓN INSTANTÁNEA: No importa el largo, disparar sumatoria de inmediato
             updateRealTimeAccumulated();
 
-            if (!nit || nit === 'C/F') return; 
+            if (!nit || nit === 'C/F') {
+                pilotNameInput.value = ''; // Limpiar si borran el NIT
+                return; 
+            }
 
-            // 1. Buscar primero en la tabla maestros de clientes (largo >= 3 para evitar saltos falsos)
-            if (nit.length >= 3) {
-                const client = state.clients.find(c => c.nit && c.nit.toUpperCase() === nit);
-                if (client && client.nombre) {
-                    if (pilotNameInput.value !== client.nombre) {
-                        pilotNameInput.value = client.nombre;
-                        pilotNameInput.classList.add('highlight-autofill');
-                        setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
-                        showToast('✓ Cliente frecuente detectado', 'success');
-                    }
-                    return;
+            // 1. Buscar primero en la tabla maestros de clientes permanentemente
+            const client = state.clients.find(c => c.nit && c.nit.toUpperCase() === nit);
+            if (client && client.nombre) {
+                if (pilotNameInput.value !== client.nombre) {
+                    pilotNameInput.value = client.nombre;
+                    pilotNameInput.classList.add('highlight-autofill');
+                    setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
+                    showToast('✓ Cliente detectado', 'success');
                 }
+                return;
             }
 
             // 2. Fallback: Buscar en el historial
@@ -643,8 +644,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
                     showToast('✓ Cliente frecuente detectado', 'success');
                 }
+            } else {
+                // Si no hay correspondencia mientras escriben, no sobrescribimos por si el cliente
+                // quiere escribir un nombre nuevo manual para este NIT nuevo
             }
-            updateRealTimeAccumulated();
         });
     }
 
