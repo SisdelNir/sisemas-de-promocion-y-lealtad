@@ -248,11 +248,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     async function init() {
-        // 1. Intentar cargar configuraciones desde la nube primero
-        await fetchEventPeriodCloud();
-        await fetchCriteriaCloud();
-        // 2. Cargar empresas desde Supabase (permite sincronización multi-dispositivo)
-        await fetchCompaniesCloud();
+        // ⚡ DETECCIÓN INMEDIATA DE QR — ANTES de cualquier llamada a Supabase
+        // Si hay ?code= en la URL, mostrar el formulario de registro AHORA
+        const urlParamsEarly = new URLSearchParams(window.location.search);
+        const codeParamEarly = urlParamsEarly.get('code');
+        const nameParamEarly = urlParamsEarly.get('name');
+
+        if (codeParamEarly) {
+            // Ocultar login de inmediato para que no se vea ni un instante
+            if (loginView) loginView.classList.add('hidden');
+
+            let companyEarly = state.companies.find(c => c.code === codeParamEarly);
+            if (!companyEarly && nameParamEarly) {
+                companyEarly = {
+                    id: 'comp_qr_' + Date.now(),
+                    name: decodeURIComponent(nameParamEarly),
+                    code: codeParamEarly,
+                    logo: null, nit: 'N/A', manager: 'Auto-Registro QR',
+                    phone: 'N/A', email: 'N/A', server: '', isActive: true
+                };
+                state.companies.push(companyEarly);
+                saveCompanies();
+            }
+            if (!companyEarly) {
+                companyEarly = state.companies.find(c => c.id === 'default') || state.companies[0];
+                if (companyEarly) companyEarly = { ...companyEarly, code: codeParamEarly, isActive: true };
+            }
+            if (companyEarly && companyEarly.isActive !== false) {
+                state.isMaster = false;
+                state.isQRLogin = true;
+                state.currentCompanyId = companyEarly.id;
+                localStorage.setItem('fe_current_company', companyEarly.id);
+            }
+        }
+
+        // 1. Cargar configuraciones en paralelo (sin bloquear la UI)
+        const [, , ] = await Promise.all([
+            fetchEventPeriodCloud(),
+            fetchCriteriaCloud(),
+            fetchCompaniesCloud()
+        ]);
 
         // CORRECCIÓN CRITICAL: Si el periodo guardado empieza hoy o después, forzar marzo para capturar historial
         const marchStart = "2026-03-01";
@@ -263,14 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const pad = (n) => n.toString().padStart(2, '0');
             state.eventPeriod.end = `${sixMonths.getFullYear()}-${pad(sixMonths.getMonth() + 1)}-${pad(sixMonths.getDate())}`;
             localStorage.setItem('fe_event_period', JSON.stringify(state.eventPeriod));
-            console.log("Periodo de evento forzado a inicio de Marzo para asegurar historial.");
         }
 
         // Cargar en los inputs de configuración SIEMPRE al inicio
         if (configEventStart) configEventStart.value = state.eventPeriod.start;
         if (configEventEnd) configEventEnd.value = state.eventPeriod.end;
-        
-        // Cargar en los filtros de reporte por defecto
         if (historyDateStart) historyDateStart.value = state.eventPeriod.start;
         if (historyDateEnd) historyDateEnd.value = state.eventPeriod.end;
         if (consumptionDateStart) consumptionDateStart.value = state.eventPeriod.start;
@@ -279,95 +311,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date().toLocaleDateString();
         if (autoDateSpan) autoDateSpan.textContent = today;
 
-        // DOBLE CUIDADO: Asegurar que los inputs reflejen el estado inmediatamente
-        if (configEventStart) configEventStart.value = state.eventPeriod.start;
-        if (configEventEnd) configEventEnd.value = state.eventPeriod.end;
-        if (historyDateStart) historyDateStart.value = state.eventPeriod.start;
-        if (historyDateEnd) historyDateEnd.value = state.eventPeriod.end;
-        if (consumptionDateStart) consumptionDateStart.value = state.eventPeriod.start;
-        if (consumptionDateEnd) consumptionDateEnd.value = state.eventPeriod.end;
-        
         loadPrizesForCompany();
         updateHeaderCompany();
         
-        // Cargar historial CRÍTICO de forma bloqueante para asegurar sumatorias correctas
-        await fetchParticipants(); 
+        // Cargar historial en segundo plano — no bloquea la UI
+        fetchParticipants();
 
-        // Retrasar ligeramente la decisión de vista para asegurar que el DOM esté listo
+        // Decidir vista final
         setTimeout(() => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const codeParam = urlParams.get('code');
-            const nameParam = urlParams.get('name');
-
-            if (codeParam) {
-                console.log("Detectado acceso por QR. Código:", codeParam);
-                
-                // 1. Buscar empresa por código
-                let company = state.companies.find(c => c.code === codeParam);
-                
-                // 2. Si no se encontró, crear empresa temporal con el nombre del QR
-                if (!company && nameParam) {
-                    company = {
-                        id: 'comp_qr_' + Date.now(),
-                        name: decodeURIComponent(nameParam),
-                        code: codeParam,
-                        logo: null,
-                        nit: 'N/A',
-                        manager: 'Auto-Registro QR',
-                        phone: 'N/A',
-                        email: 'N/A',
-                        server: '',
-                        isActive: true
-                    };
-                    state.companies.push(company);
-                    saveCompanies();
-                }
-
-                // 3. Último recurso: si aún no hay empresa, usar la empresa default
-                if (!company) {
-                    company = state.companies.find(c => c.id === 'default') || state.companies[0];
-                    if (company) {
-                        company = { ...company, code: codeParam, isActive: true };
-                    }
-                }
-
-                // 4. Con empresa encontrada → siempre ir al formulario de registro
-                if (company) {
-                    // Solo bloquear si explícitamente está INACTIVA
-                    if (company.isActive === false) {
-                        alert('Esta empresa se encuentra temporalmente INACTIVA. Contacte al administrador.');
-                        showView('login');
-                        return;
-                    }
-
-                    state.isMaster = false;
-                    state.isQRLogin = true;
-                    state.currentCompanyId = company.id;
-                    localStorage.setItem('fe_current_company', company.id);
-                    loadPrizesForCompany();
-                    updateHeaderCompany();
-                    
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    showView('registration');
-                    console.log("✅ Formulario de registro directo por QR para:", company.name);
-                } else {
-                    // Caso extremo: sin empresa → igual mostrar formulario con default
-                    state.isQRLogin = true;
-                    showView('registration');
-                }
+            if (state.isQRLogin) {
+                // Ya está configurado, solo mostrar el formulario
+                window.history.replaceState({}, document.title, window.location.pathname);
+                showView('registration');
+                console.log("✅ QR: mostrando formulario de registro para empresa:", state.currentCompanyId);
             } else {
-                // Sin código QR → mostrar login (acceso manual del operador)
-                showView('login'); 
+                // Login manual del operador
+                showView('login');
                 setTimeout(() => accessCodeInput.focus(), 150);
             }
-            
             renderWheel();
-        }, 150);
-
+        }, 50);
 
         if (window.location.protocol === 'file:') {
             console.warn("ATENCIÓN: Sistema en modo local (file://).");
         }
+
     }
 
     function safeParseDate(val) {
