@@ -67,7 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadPrizesForCompany() {
         ['general', 'plata', 'oro'].forEach(tier => {
-            const saved = localStorage.getItem(getPrizesKey(tier));
+            let saved = null;
+            try {
+                saved = localStorage.getItem(getPrizesKey(tier));
+            } catch (err) {
+                console.warn("localStorage restricted:", err);
+            }
             try {
                 const parsed = saved ? JSON.parse(saved) : null;
                 if (parsed && Array.isArray(parsed) && parsed.length > 0) {
@@ -105,7 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Solo aceptar si es un array válido y no está vacío
                     if (Array.isArray(prizes) && prizes.length > 0) {
                         state.allPrizes[row.tier] = prizes;
-                        localStorage.setItem(getPrizesKey(row.tier), JSON.stringify(prizes));
+                        try {
+                            localStorage.setItem(getPrizesKey(row.tier), JSON.stringify(prizes));
+                        } catch (err) {
+                            console.warn("localStorage set failed:", err);
+                        }
                     }
                 }
             });
@@ -163,7 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 cloudCompanies.unshift({ id: 'default', name: 'Full Energy', logo: null, nit: 'N/A', manager: 'Sistema', phone: 'N/A', email: 'v1.0', code: 'FEA001', isActive: true });
             }
             state.companies = cloudCompanies;
-            localStorage.setItem('fe_companies', JSON.stringify(state.companies));
+            try {
+                localStorage.setItem('fe_companies', JSON.stringify(state.companies));
+            } catch (err) {
+                console.warn("localStorage block:", err);
+            }
             console.log('Empresas cargadas desde la nube:', state.companies.length);
             renderCompaniesConfig && renderCompaniesConfig();
             updateHeaderCompany();
@@ -302,7 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.isMaster = false;
                 state.isQRLogin = true;
                 state.currentCompanyId = companyEarly.id;
-                localStorage.setItem('fe_current_company', companyEarly.id);
+                try {
+                    localStorage.setItem('fe_current_company', companyEarly.id);
+                } catch(e) {}
             }
         }
 
