@@ -152,14 +152,26 @@
 }
 
 .qr-info {
-    font-weight: 800;
-    font-size: 1.4rem;
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 12px;
-    border: 2px dashed #00f2fe;
-    color: #001f3f !important;
-    letter-spacing: 2px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, #ff007f, #ff8c00);
+    padding: 1.2rem 1rem;
+    border-radius: 15px;
+    border: none;
+    color: white !important;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 20px rgba(255,0,127,0.4);
+    line-height: 1.4;
+    text-align: center;
+    background-size: 200% auto;
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 * {

@@ -1272,7 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateQR(companyCode, companyName) {
         const code = companyCode && companyCode !== 'undefined' ? companyCode : 'FEA001';
         qrCompanyName.textContent = companyName;
-        qrAccessCodeText.textContent = `CÓDIGO: ${code}`;
+        qrAccessCodeText.innerHTML = `PUEDES ESCALAR Y<br>GANAR MEJORES PREMIOS`;
         
         let company = state.companies.find(c => c.code === code);
         let baseUrl = "";
