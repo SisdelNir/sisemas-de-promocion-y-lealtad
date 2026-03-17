@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
         currentCompanyId: localStorage.getItem('fe_current_company') || 'default',
         currentParticipant: null,
+        clients: [],
+        participants: [],
         isSpinning: false,
         isMaster: false,
         isQRLogin: false,
@@ -623,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 1. Buscar primero en la tabla maestros de clientes permanentemente
-            const client = state.clients.find(c => c.nit && c.nit.toUpperCase() === nit);
+            const client = state.clients.find(c => c.nit && normalizeNIT(c.nit) === normalizeNIT(nit));
             if (client && client.nombre) {
                 if (pilotNameInput.value !== client.nombre) {
                     pilotNameInput.value = client.nombre;
@@ -635,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 2. Fallback: Buscar en el historial
-            const existing = state.participants.find(p => p.nit && p.nit.toUpperCase() === nit);
+            const existing = state.participants.find(p => p.nit && normalizeNIT(p.nit) === normalizeNIT(nit));
             if (existing && existing.piloto) {
                 const cleanName = existing.piloto.split(' (NIT:')[0];
                 if (pilotNameInput.value !== cleanName) {
