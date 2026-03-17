@@ -21,8 +21,16 @@
         }
     </script>
     <style>
-        /* Si es acceso por QR, ocultar login inmediatamente */
-        html.qr-access #login-view { display: none !important; }
+        /* ===== MODO QR: arranca ANTES de que JS cargue ===== */
+        /* Ocultar login de inmediato */
+        html.qr-access #login-view           { display: none  !important; }
+        /* Mostrar formulario de participante de inmediato */
+        html.qr-access #registration-view    { display: block !important; }
+        /* Mostrar el header con el logo */
+        html.qr-access header                { display: flex  !important; }
+        /* Ocultar botones de administración — el cliente no los necesita */
+        html.qr-access #btn-config           { display: none  !important; }
+        html.qr-access #btn-close-registration { display: none !important; }
 
         @media print {
             body * { visibility: hidden; }
