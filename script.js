@@ -446,6 +446,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return s.replace(/^0+/, '');
     }
 
+    // --- Cache local de teléfonos por NIT (porque la tabla clientes no existe aún en Supabase) ---
+    function cacheClientData(nit, nombre, telefono) {
+        if (!nit || nit === 'C/F') return;
+        const cache = JSON.parse(localStorage.getItem('fe_client_cache') || '{}');
+        const key = normalizeNIT(nit);
+        if (!cache[key]) cache[key] = {};
+        if (nombre) cache[key].nombre = nombre;
+        if (telefono) cache[key].telefono = telefono;
+        localStorage.setItem('fe_client_cache', JSON.stringify(cache));
+    }
+
+    function getCachedClientData(nit) {
+        if (!nit) return null;
+        const cache = JSON.parse(localStorage.getItem('fe_client_cache') || '{}');
+        return cache[normalizeNIT(nit)] || null;
+    }
+
     async function fetchParticipants() {
         try {
             console.log('Fetching data...');
@@ -749,6 +766,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast('✓ Cliente frecuente detectado', 'success');
                 }
             }
+
+            // 3. Último recurso: Cache local de teléfonos (localStorage)
+            if (phoneInput && (!phoneInput.value || phoneInput.value.trim() === '')) {
+                const cached = getCachedClientData(nit);
+                if (cached) {
+                    if (cached.telefono) {
+                        phoneInput.value = cached.telefono;
+                        phoneInput.classList.add('highlight-autofill');
+                        setTimeout(() => phoneInput.classList.remove('highlight-autofill'), 2000);
+                    }
+                    if (!pilotNameInput.value && cached.nombre) {
+                        pilotNameInput.value = cached.nombre;
+                        pilotNameInput.classList.add('highlight-autofill');
+                        setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
+                    }
+                    if (cached.telefono || cached.nombre) {
+                        showToast('✓ Datos recuperados', 'success');
+                    }
+                }
+            }
         });
 
         // Búsqueda en vivo a la nube al salir del campo (Si no se encontró localmente)
@@ -946,8 +983,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 0. Asegurar que el CLIENTE existe en la tabla clientes (NIT es PK)
-        // Incluimos C/F para que la relación de base de datos no falle
+        // 0. Guardar datos del cliente en caché local (siempre funciona)
+        cacheClientData(nit, pilotName, phone);
+
+        // 0b. Intentar guardar en la tabla clientes de Supabase (si existe)
         try {
             const clientUpdate = {
                 nit: nit,
