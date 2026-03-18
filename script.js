@@ -446,11 +446,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return s.replace(/^0+/, '');
     }
 
-    // --- Cache local de teléfonos por NIT (porque la tabla clientes no existe aún en Supabase) ---
+    // --- Cache local de teléfonos por NIT+EMPRESA (cada empresa tiene sus propios clientes) ---
+    function _getCompanyKey() {
+        const company = state.companies.find(c => c.id === state.currentCompanyId);
+        return company ? company.name : 'default';
+    }
+
     function cacheClientData(nit, nombre, telefono) {
         if (!nit || nit === 'C/F') return;
+        const companyKey = _getCompanyKey();
         const cache = JSON.parse(localStorage.getItem('fe_client_cache') || '{}');
-        const key = normalizeNIT(nit);
+        const key = companyKey + '::' + normalizeNIT(nit);
         if (!cache[key]) cache[key] = {};
         if (nombre) cache[key].nombre = nombre;
         if (telefono) cache[key].telefono = telefono;
@@ -459,8 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getCachedClientData(nit) {
         if (!nit) return null;
+        const companyKey = _getCompanyKey();
         const cache = JSON.parse(localStorage.getItem('fe_client_cache') || '{}');
-        return cache[normalizeNIT(nit)] || null;
+        return cache[companyKey + '::' + normalizeNIT(nit)] || null;
     }
 
     async function fetchParticipants() {
@@ -730,15 +737,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // 2. Fallback: Buscar en el historial
+            // 2. Fallback: Buscar en el historial (FILTRADO POR EMPRESA ACTUAL)
+            const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
+            const currentCompanyName = currentCompany ? currentCompany.name : '';
+
             let existing = state.participants.find(p => {
                 const pNit = p.nit || p.placa;
-                return pNit && normalizeNIT(pNit) === normalizeNIT(nit) && p.telefono && p.telefono.trim() !== '';
+                if (!pNit || normalizeNIT(pNit) !== normalizeNIT(nit)) return false;
+                // Filtrar por empresa
+                const isSameCompany = (p.empresa === currentCompanyName) || (p.consumo && typeof p.consumo === 'string' && p.consumo.includes(`[${currentCompanyName}]`));
+                return isSameCompany && p.telefono && p.telefono.trim() !== '';
             });
             if (!existing) {
                 existing = state.participants.find(p => {
                     const pNit = p.nit || p.placa;
-                    return pNit && normalizeNIT(pNit) === normalizeNIT(nit);
+                    if (!pNit || normalizeNIT(pNit) !== normalizeNIT(nit)) return false;
+                    const isSameCompany = (p.empresa === currentCompanyName) || (p.consumo && typeof p.consumo === 'string' && p.consumo.includes(`[${currentCompanyName}]`));
+                    return isSameCompany;
                 });
             }
             if (existing && existing.piloto) {
