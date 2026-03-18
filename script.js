@@ -719,6 +719,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // Búsqueda en vivo a la nube al salir del campo (Si no se encontró localmente)
+        nitInput.addEventListener('blur', async () => {
+            const nit = nitInput.value.trim().toUpperCase();
+            if (!nit || nit === 'C/F') return;
+
+            // Evitar sobrescribir si el cliente ya fue autocompletado por caché local o manual
+            if (pilotNameInput.value && pilotNameInput.value.trim().length > 0) return;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .select('nombre, telefono')
+                    .eq('nit', nit)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    pilotNameInput.value = data.nombre || '';
+                    if (phoneInput && data.telefono) phoneInput.value = data.telefono;
+
+                    pilotNameInput.classList.add('highlight-autofill');
+                    if (phoneInput) phoneInput.classList.add('highlight-autofill');
+
+                    setTimeout(() => {
+                        pilotNameInput.classList.remove('highlight-autofill');
+                        if (phoneInput) phoneInput.classList.remove('highlight-autofill');
+                    }, 2000);
+                    showToast('✓ Cliente sincronizado desde la nube', 'success');
+                }
+            } catch (err) {
+                // Silencioso, si no existe o falla la red, el usuario simplemente sigue escribiendo manual
+            }
+        });
     }
 
     if (totalConsumptionInput) {
