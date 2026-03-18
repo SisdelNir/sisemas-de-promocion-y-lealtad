@@ -33,6 +33,9 @@
         /* Ocultar botones de administración — el cliente no los necesita */
         html.qr-access #btn-config           { display: none  !important; }
         html.qr-access #btn-close-registration { display: none !important; }
+        /* En modo QR: ocultar nombre y teléfono (se muestran solo si NIT es nuevo) */
+        html.qr-access .qr-hidden-field        { display: none; }
+        html.qr-access .qr-hidden-field.qr-show-field { display: block !important; }
 
         @media print {
             body * { visibility: hidden; }
@@ -105,11 +108,11 @@
                             <label for="invoice-number">No. de Factura</label>
                             <input type="text" id="invoice-number" required placeholder="Ej. 12345">
                         </div>
-                        <div class="input-group">
+                        <div class="input-group qr-hidden-field" id="qr-field-name">
                             <label for="pilot-name">Nombre del Participante</label>
                             <input type="text" id="pilot-name" required placeholder="Escriba su nombre completo">
                         </div>
-                        <div class="input-group">
+                        <div class="input-group qr-hidden-field" id="qr-field-phone">
                             <label for="phone">Teléfono</label>
                             <input type="tel" id="phone" placeholder="Ej. 5555-4444">
                         </div>

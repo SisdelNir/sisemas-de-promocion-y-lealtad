@@ -702,8 +702,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!nit || nit === 'C/F') {
                 pilotNameInput.value = '';
                 if (phoneInput) phoneInput.value = '';
+                // En QR: mostrar campos nombre/teléfono para C/F o vacío
+                if (state.isQRLogin) {
+                    const nameField = document.getElementById('qr-field-name');
+                    const phoneField = document.getElementById('qr-field-phone');
+                    if (nameField) nameField.classList.add('qr-show-field');
+                    if (phoneField) phoneField.classList.add('qr-show-field');
+                }
                 return;
             }
+
+            // --- QR MODE: Verificar si el NIT ya existe para decidir si mostrar campos extra ---
+            let qrClientFound = false;
 
             // 1. Buscar primero en la tabla maestros de clientes permanentemente
             const client = state.clients.find(c => c.nit && normalizeNIT(c.nit) === normalizeNIT(nit));
@@ -730,9 +740,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                     showToast('✓ Cliente detectado', 'success');
                 }
+                qrClientFound = true;
                 
-                // Si ya conseguimos AMBOS datos, salimos temprano
-                if (pilotNameInput.value && pilotNameInput.value.trim() !== '' && phoneInput.value && phoneInput.value.trim() !== '') {
+                // Si ya conseguimos AMBOS datos y NO es QR, salimos temprano
+                if (!state.isQRLogin && pilotNameInput.value && pilotNameInput.value.trim() !== '' && phoneInput.value && phoneInput.value.trim() !== '') {
                     return;
                 }
             }
@@ -780,6 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                     showToast('✓ Cliente frecuente detectado', 'success');
                 }
+                qrClientFound = true;
             }
 
             // 3. Último recurso: Cache local de teléfonos (localStorage)
@@ -790,15 +802,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         phoneInput.value = cached.telefono;
                         phoneInput.classList.add('highlight-autofill');
                         setTimeout(() => phoneInput.classList.remove('highlight-autofill'), 2000);
+                        qrClientFound = true;
                     }
                     if (!pilotNameInput.value && cached.nombre) {
                         pilotNameInput.value = cached.nombre;
                         pilotNameInput.classList.add('highlight-autofill');
                         setTimeout(() => pilotNameInput.classList.remove('highlight-autofill'), 2000);
+                        qrClientFound = true;
                     }
                     if (cached.telefono || cached.nombre) {
                         showToast('✓ Datos recuperados', 'success');
                     }
+                }
+            }
+
+            // --- QR MODE: Mostrar u ocultar campos según si el cliente ya existe ---
+            if (state.isQRLogin) {
+                const nameField = document.getElementById('qr-field-name');
+                const phoneField = document.getElementById('qr-field-phone');
+
+                if (qrClientFound && pilotNameInput.value && pilotNameInput.value.trim() !== '') {
+                    // Cliente recurrente: ocultar campos, quitar required del nombre
+                    if (nameField) nameField.classList.remove('qr-show-field');
+                    if (phoneField) phoneField.classList.remove('qr-show-field');
+                    pilotNameInput.removeAttribute('required');
+                } else {
+                    // Cliente nuevo: mostrar campos, poner required
+                    if (nameField) nameField.classList.add('qr-show-field');
+                    if (phoneField) phoneField.classList.add('qr-show-field');
+                    pilotNameInput.setAttribute('required', 'required');
                 }
             }
         });
