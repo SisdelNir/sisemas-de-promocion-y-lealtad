@@ -683,11 +683,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 1. Buscar primero en la tabla maestros de clientes permanentemente
             const client = state.clients.find(c => c.nit && normalizeNIT(c.nit) === normalizeNIT(nit));
-            if (client && client.nombre) {
-                if (pilotNameInput.value !== client.nombre) {
+            if (client && (client.nombre || client.telefono)) {
+                let updated = false;
+
+                if (client.nombre && pilotNameInput.value !== client.nombre) {
                     pilotNameInput.value = client.nombre;
-                    if (phoneInput && client.telefono) phoneInput.value = client.telefono;
-                    
+                    updated = true;
+                }
+                
+                if (phoneInput && client.telefono && phoneInput.value !== client.telefono) {
+                    phoneInput.value = client.telefono;
+                    updated = true;
+                }
+                
+                if (updated) {
                     pilotNameInput.classList.add('highlight-autofill');
                     if (phoneInput) phoneInput.classList.add('highlight-autofill');
                     
@@ -713,10 +722,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (existing && existing.piloto) {
                 const cleanName = existing.piloto.split(' (NIT:')[0];
+                let updated = false;
+
                 if (pilotNameInput.value !== cleanName) {
                     pilotNameInput.value = cleanName;
-                    if (phoneInput && existing.telefono) phoneInput.value = existing.telefono;
-                    
+                    updated = true;
+                }
+                
+                if (phoneInput && existing.telefono && phoneInput.value !== existing.telefono) {
+                    phoneInput.value = existing.telefono;
+                    updated = true;
+                }
+
+                if (updated) {
                     pilotNameInput.classList.add('highlight-autofill');
                     if (phoneInput) phoneInput.classList.add('highlight-autofill');
                     
