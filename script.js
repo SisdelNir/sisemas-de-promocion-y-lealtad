@@ -706,7 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                     showToast('✓ Cliente detectado', 'success');
                 }
-                return;
+                
+                // Si ya conseguimos AMBOS datos, salimos temprano
+                if (pilotNameInput.value && pilotNameInput.value.trim() !== '' && phoneInput.value && phoneInput.value.trim() !== '') {
+                    return;
+                }
             }
 
             // 2. Fallback: Buscar en el historial
