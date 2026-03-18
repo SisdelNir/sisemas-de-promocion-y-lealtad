@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('Empresas: usando localStorage (tabla cloud no disponible aún)');
                 return;
             }
-            // Merge: las empresas de la nube tienen prioridad, pero mantener 'default' siempre
+            // MERGE INTELIGENTE: combinar nube + local sin perder ninguna empresa
             const cloudCompanies = data.map(c => ({
                 id: c.id,
                 name: c.name,
@@ -167,17 +167,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 logo: c.logo || null,
                 isActive: c.is_active !== false
             }));
-            const hasDefault = cloudCompanies.some(c => c.id === 'default');
-            if (!hasDefault) {
-                cloudCompanies.unshift({ id: 'default', name: 'Full Energy', logo: null, nit: 'N/A', manager: 'Sistema', phone: 'N/A', email: 'v1.0', code: 'FEA001', isActive: true });
-            }
-            state.companies = cloudCompanies;
+
+            // Mantener empresas locales que NO existen en la nube
+            const localOnly = state.companies.filter(local => 
+                local.id !== 'default' && !cloudCompanies.some(cloud => cloud.id === local.id)
+            );
+
+            // Empezar con default
+            const merged = [{ id: 'default', name: 'Full Energy', logo: null, nit: 'N/A', manager: 'Sistema', phone: 'N/A', email: 'v1.0', code: 'FEA001', isActive: true }];
+            
+            // Agregar empresas de la nube (actualizan cualquier versión local)
+            cloudCompanies.forEach(c => {
+                if (c.id !== 'default') merged.push(c);
+            });
+
+            // Agregar empresas que solo existen localmente (no perderlas)
+            localOnly.forEach(c => merged.push(c));
+
+            state.companies = merged;
             try {
                 localStorage.setItem('fe_companies', JSON.stringify(state.companies));
             } catch (err) {
                 console.warn("localStorage block:", err);
             }
-            console.log('Empresas cargadas desde la nube:', state.companies.length);
+            console.log('Empresas sincronizadas (nube + local):', state.companies.length, '| Solo-local:', localOnly.length);
+            
+            // Subir empresas solo-locales a la nube para que no se pierdan
+            if (localOnly.length > 0) {
+                console.log('Sincronizando', localOnly.length, 'empresas locales a la nube...');
+                saveCompaniesCloud();
+            }
+
             renderCompaniesConfig && renderCompaniesConfig();
             updateHeaderCompany();
         } catch (e) {
