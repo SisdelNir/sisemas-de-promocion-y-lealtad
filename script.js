@@ -751,7 +751,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!pIdentNorm || pIdentNorm !== nitNorm) return false;
                 
                 // Filtrar por EMPRESA para que el acumulado sea individual por sucursal/marca
-                const isSameCompany = (p.empresa === currentCompanyName);
+                const isSameCompany = (p.empresa && p.empresa.includes(currentCompanyName)) || 
+                                      (p.consumo && p.consumo.includes(`[${currentCompanyName}]`));
                 if (!isSameCompany) return false;
 
                 let pDateObj = safeParseDate(p.created_at || p.fecha);
@@ -838,7 +839,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!pIdentNorm || pIdentNorm !== nitNorm) return false;
                 
                 // Filtrar por EMPRESA para que el acumulado sea individual por sucursal/marca
-                const isSameCompany = (p.empresa === currentCompanyName);
+                const isSameCompany = (p.empresa && p.empresa.includes(currentCompanyName)) || 
+                                      (p.consumo && p.consumo.includes(`[${currentCompanyName}]`));
                 if (!isSameCompany) return false;
                 
                 let pDateObj = safeParseDate(p.created_at || p.fecha);
