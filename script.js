@@ -701,7 +701,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 2. Fallback: Buscar en el historial
-            const existing = state.participants.find(p => p.nit && normalizeNIT(p.nit) === normalizeNIT(nit));
+            const existing = state.participants.find(p => {
+                const pNit = p.nit || p.placa;
+                return pNit && normalizeNIT(pNit) === normalizeNIT(nit);
+            });
             if (existing && existing.piloto) {
                 const cleanName = existing.piloto.split(' (NIT:')[0];
                 if (pilotNameInput.value !== cleanName) {
