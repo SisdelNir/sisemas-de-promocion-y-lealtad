@@ -701,10 +701,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 2. Fallback: Buscar en el historial
-            const existing = state.participants.find(p => {
+            let existing = state.participants.find(p => {
                 const pNit = p.nit || p.placa;
-                return pNit && normalizeNIT(pNit) === normalizeNIT(nit);
+                return pNit && normalizeNIT(pNit) === normalizeNIT(nit) && p.telefono && p.telefono.trim() !== '';
             });
+            if (!existing) {
+                existing = state.participants.find(p => {
+                    const pNit = p.nit || p.placa;
+                    return pNit && normalizeNIT(pNit) === normalizeNIT(nit);
+                });
+            }
             if (existing && existing.piloto) {
                 const cleanName = existing.piloto.split(' (NIT:')[0];
                 if (pilotNameInput.value !== cleanName) {
@@ -728,8 +734,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const nit = nitInput.value.trim().toUpperCase();
             if (!nit || nit === 'C/F') return;
 
-            // Evitar sobrescribir si el cliente ya fue autocompletado por caché local o manual
-            if (pilotNameInput.value && pilotNameInput.value.trim().length > 0) return;
+            // Autocompletar desde la nube si faltan datos en los campos locales
+            if (pilotNameInput.value && pilotNameInput.value.trim() !== '' && phoneInput && phoneInput.value.trim() !== '') return;
 
             try {
                 const { data, error } = await supabaseClient
@@ -739,8 +745,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     .maybeSingle();
 
                 if (!error && data) {
-                    pilotNameInput.value = data.nombre || '';
-                    if (phoneInput && data.telefono) phoneInput.value = data.telefono;
+                    if (!pilotNameInput.value) pilotNameInput.value = data.nombre || '';
+                    if (phoneInput && !phoneInput.value && data.telefono) phoneInput.value = data.telefono;
 
                     pilotNameInput.classList.add('highlight-autofill');
                     if (phoneInput) phoneInput.classList.add('highlight-autofill');
