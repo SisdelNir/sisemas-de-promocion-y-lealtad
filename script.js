@@ -1558,31 +1558,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnDownloadQr.style.display = 'none';
                 
                 html2canvas(qrCard, {
-                    backgroundColor: '#ffffff', // Fondo negro transparente no aplica bien
-                    scale: 2, // Mejor resolución
-                    logging: false
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
                 }).then(canvas => {
                     // Restaurar botón
                     btnDownloadQr.style.display = 'flex';
 
-                    const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                    const fileName = `QR_${name || 'acceso'}.png`;
+                    const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').toUpperCase();
+                    const fileName = `QR_${name || 'ACCESO'}.png`;
                     
-                    canvas.toBlob(function(blob) {
-                        const blobUrl = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = blobUrl;
-                        a.download = fileName;
-                        document.body.appendChild(a);
-                        a.click();
+                    // Método robusto: convertir a data URL directamente
+                    // Safari NO respeta .download en blob URLs, pero SÍ en data URLs
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = fileName;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Limpiar después de un momento
+                    setTimeout(() => {
                         document.body.removeChild(a);
-                        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                    }, 'image/png');
-                    showToast && showToast('Descargando: ' + fileName, 'success');
+                    }, 500);
+                    
+                    showToast && showToast('✅ Descargando: ' + fileName, 'success');
                 }).catch(err => {
                     console.error("Error generando imagen QR:", err);
                     btnDownloadQr.style.display = 'flex';
-                    alert("Error al descargar la imagen completa.");
+                    alert("Error al descargar la imagen. Intente de nuevo.");
                 });
             } else {
                 alert('La librería para capturar imágenes aún no ha cargado. Refresque la página.');
