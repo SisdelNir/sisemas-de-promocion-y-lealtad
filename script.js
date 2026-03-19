@@ -1147,47 +1147,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
         wheel.style.background = `conic-gradient(from -90deg, ${gradient})`;
 
-        // Tamaño de fuente adaptativo según cantidad de premios
-        const fontSize = numSegments <= 6  ? '0.8rem'
-                       : numSegments <= 10 ? '0.7rem'
-                       : numSegments <= 16 ? '0.58rem'
-                       : '0.45rem';
+        // ── Dimensiones reales de la ruleta ──────────────────────────────────
+        // El wheel tiene width: min(340px, 80vw) → radio ≈ min(170px, 40vw)
+        // El hub central (.wheel::after) tiene 32px de diámetro → radio hub = 16px
+        // La etiqueta debe ir: desde el hub (16px) hasta el borde (radio - borde(8px))
+        const WHEEL_RADIUS = Math.min(170, window.innerWidth * 0.40);
+        const HUB_RADIUS   = 17;   // margen desde el centro hasta más allá el hub
+        const LABEL_WIDTH  = WHEEL_RADIUS - HUB_RADIUS - 6;  // -6px margen del borde
 
-        // Ancho del arco por segmento (en px) a radio medio ≈ 90px
-        const arcWidth = Math.floor((2 * Math.PI * 90) / numSegments);
-        // Alto del label = ancho del arco (limitado para no solapar)
-        const labelH = Math.max(12, Math.min(arcWidth - 2, 22));
+        // ── Altura del label = arco del segmento a radio medio ───────────────
+        const midRadius = HUB_RADIUS + LABEL_WIDTH / 2;
+        const arcHeight = Math.floor(2 * Math.PI * midRadius * (segmentAngle / 360)) - 3;
+        const labelH    = Math.max(10, Math.min(arcHeight, 28));
+
+        // ── Tamaño de fuente: basado en el espacio disponible (arcHeight) ────
+        // Cuanto más segmentos, menos espacio en arco → letra más pequeña
+        const fontSize = arcHeight >= 24 ? '0.82rem'
+                       : arcHeight >= 18 ? '0.70rem'
+                       : arcHeight >= 13 ? '0.58rem'
+                       : arcHeight >= 10 ? '0.50rem'
+                       :                   '0.43rem';
 
         state.prizes.forEach((prize, i) => {
             const label = document.createElement('div');
             label.className = 'segment-label';
-            label.textContent = prize.text;
+            // MAYÚSCULAS para máxima legibilidad en espacio pequeño
+            label.textContent = prize.text.toUpperCase();
 
+            // Centro del segmento i (ángulo desde las 12 en punto)
             const rotateAngle = (i * segmentAngle) + (segmentAngle / 2);
 
-            // El label sale del CENTRO hacia el BORDE, rotado al ángulo del segmento
-            // transform-origin 0 0 = gira sobre el centro del wheel
+            // El label sale del centro (left:50%, top:50%) hacia el borde.
+            // transform-origin: 0 0 → gira sobre exactamente el centro del wheel.
             Object.assign(label.style, {
-                position:       'absolute',
-                left:           '50%',
-                top:            '50%',
+                position:        'absolute',
+                left:            '50%',
+                top:             '50%',
                 transformOrigin: '0 0',
-                transform:      `rotate(${rotateAngle}deg)`,
-                width:          '165px',   // desde centro al borde (radio ~180px)
-                height:         `${labelH}px`,
-                marginTop:      `${-labelH / 2}px`,
-                display:        'flex',
-                alignItems:     'center',
-                paddingLeft:    '22px',    // dejar espacio en el centro (hub)
-                paddingRight:   '10px',
-                fontWeight:     '800',
-                fontSize:       fontSize,
-                color:          'white',
-                textShadow:     '0 1px 3px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8)',
-                whiteSpace:     'nowrap',
-                overflow:       'hidden',
-                letterSpacing:  '0.3px',
-                pointerEvents:  'none'
+                transform:       `rotate(${rotateAngle}deg)`,
+                width:           `${LABEL_WIDTH}px`,  // de hub hasta borde del wheel
+                height:          `${labelH}px`,
+                marginTop:       `${-labelH / 2}px`,
+                marginLeft:      `${HUB_RADIUS}px`,   // empujar pasado el hub
+                display:         'flex',
+                alignItems:      'center',
+                paddingLeft:     '4px',
+                paddingRight:    '5px',
+                fontWeight:      '900',
+                fontSize:        fontSize,
+                fontFamily:      "'Outfit', 'Arial Narrow', Arial, sans-serif",
+                color:           'white',
+                textShadow:      '0 0 4px rgba(0,0,0,1), 1px 1px 0 rgba(0,0,0,0.9), -1px -1px 0 rgba(0,0,0,0.9)',
+                whiteSpace:      'nowrap',
+                overflow:        'hidden',
+                letterSpacing:   '-0.2px',
+                pointerEvents:   'none',
+                lineHeight:      '1'
             });
 
             wheel.appendChild(label);
