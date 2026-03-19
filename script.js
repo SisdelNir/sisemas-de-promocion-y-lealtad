@@ -732,6 +732,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // LIMPIAR campos antes de buscar - evita que datos de un NIT anterior se queden pegados
+            pilotNameInput.value = '';
+            if (phoneInput) phoneInput.value = '';
+
             // --- QR MODE: Verificar si el NIT ya existe para decidir si mostrar campos extra ---
             let qrClientFound = false;
 
