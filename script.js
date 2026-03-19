@@ -2334,10 +2334,21 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Filtrando consumo desde ${startVal || 'inicio'} hasta ${endVal || 'fin'}`);
         }
 
-        // Agrupar por NIT
+        // Agrupar por NIT — FILTRADO POR EMPRESA ACTUAL
         const groups = {};
+        const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
+        const currentCompanyName = currentCompany ? currentCompany.name : '';
+
+        // Filtrar participantes por empresa actual
+        let companyParticipants = state.participants;
+        if (!state.isMaster && currentCompany && currentCompany.id !== 'default') {
+            companyParticipants = state.participants.filter(p => 
+                (p.empresa === currentCompanyName) || 
+                (p.consumo && typeof p.consumo === 'string' && p.consumo.includes(`[${currentCompanyName}]`))
+            );
+        }
         
-        state.participants.forEach(p => {
+        companyParticipants.forEach(p => {
             // Validar fecha si hay filtros (usando strings YYYY-MM-DD para evitar desfases)
             if (startVal || endVal) {
                 let pDateObj = p.created_at ? new Date(p.created_at) : safeParseDate(p.fecha);
