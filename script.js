@@ -554,8 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // --- FILTRAR: Solo mostrar ganadores de premios (excluir "SIGUE PARTICIPANDO") ---
+        displayParticipants = displayParticipants.filter(p => 
+            p.premio && p.premio.trim() !== '' && p.premio.trim().toUpperCase() !== 'SIGUE PARTICIPANDO'
+        );
+
         if (!displayParticipants || displayParticipants.length === 0) {
-            if (historyBody) historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-dim);">No hay premios registrados para esta empresa todavía.</td></tr>';
+            if (historyBody) historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-dim);">No hay premios ganados para esta empresa todavía.</td></tr>';
             return;
         }
 
