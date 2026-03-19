@@ -1137,12 +1137,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const segmentAngle = 360 / numSegments;
+
+        // 🔑 PUNTO CLAVE: El conic-gradient de CSS empieza en "3 en punto" (90°).
+        // El puntero apunta a "12 en punto" (0°). Usamos `from -90deg` para alinearlos.
         const gradient = state.prizes.map((p, i) => {
             const color = p.color || '#333';
             return `${color} ${(i * 360) / numSegments}deg ${((i + 1) * 360) / numSegments}deg`;
         }).join(', ');
 
-        wheel.style.background = `conic-gradient(${gradient})`;
+        wheel.style.background = `conic-gradient(from -90deg, ${gradient})`;
 
         // Tamaño de fuente adaptativo según cantidad de premios
         const fontSize = numSegments <= 6  ? '0.8rem'
@@ -1266,9 +1269,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const prizeIndex = Math.floor(Math.random() * numPrizes);
         const prize = state.prizes[prizeIndex];
         const segmentAngle = 360 / numPrizes;
-        const extraSpins = 7 + Math.floor(Math.random() * 5); // Más vueltas para mejor efecto
-        const rotation = (extraSpins * 360) + (360 - (prizeIndex * segmentAngle) - (segmentAngle / 2));
+        const extraSpins = 7 + Math.floor(Math.random() * 5);
+
+        // 🎯 ALINEACIÓN COMPLETA:
+        // El puntero apunta a "12 en punto" (0°).
+        // El segmento[prizeIndex] empieza en (prizeIndex * segmentAngle) y tiene centro
+        // en (prizeIndex * segmentAngle + segmentAngle/2).
+        // Para llevarlo a "12 en punto", rotamos: 360 - centro_del_segmento.
+        // Con `from -90deg` en el gradient, los colores ya están alineados con esto.
+        const targetAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
+        const rotation = (extraSpins * 360) + (360 - targetAngle);
         wheel.style.transform = `rotate(${rotation}deg)`;
+
+        console.log(`🎰 Premio sorteado: "${prize.text}" (index ${prizeIndex}, ángulo centro: ${targetAngle.toFixed(1)}°, rotación total: ${rotation.toFixed(1)}°)`);
 
         setTimeout(async () => {
             state.isSpinning = false;
