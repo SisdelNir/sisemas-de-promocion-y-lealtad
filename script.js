@@ -1171,8 +1171,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.prizes.forEach((prize, i) => {
             const label = document.createElement('div');
             label.className = 'segment-label';
-            // MAYÚSCULAS para máxima legibilidad en espacio pequeño
-            label.textContent = prize.text.toUpperCase();
+            // Minúscula negrita — mejor legibilidad visual en la ruleta
+            label.textContent = prize.text;
 
             // Centro del segmento i (ángulo desde las 12 en punto)
             const rotateAngle = (i * segmentAngle) + (segmentAngle / 2);
@@ -1196,11 +1196,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 fontWeight:      '900',
                 fontSize:        fontSize,
                 fontFamily:      "'Outfit', 'Arial Narrow', Arial, sans-serif",
+                textTransform:   'none',
                 color:           'white',
                 textShadow:      '0 0 4px rgba(0,0,0,1), 1px 1px 0 rgba(0,0,0,0.9), -1px -1px 0 rgba(0,0,0,0.9)',
                 whiteSpace:      'nowrap',
                 overflow:        'hidden',
-                letterSpacing:   '-0.2px',
+                letterSpacing:   '0px',
                 pointerEvents:   'none',
                 lineHeight:      '1'
             });
