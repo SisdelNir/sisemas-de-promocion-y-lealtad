@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('Empresas: usando localStorage (tabla cloud no disponible aún)');
                 return;
             }
-            // MERGE INTELIGENTE: combinar nube + local sin perder ninguna empresa
+            // MERGE INTELIGENTE: la nube es la fuente de verdad
             const cloudCompanies = data.map(c => ({
                 id: c.id,
                 name: c.name,
@@ -168,20 +168,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 isActive: c.is_active !== false
             }));
 
-            // Mantener empresas locales que NO existen en la nube
+            // Deduplicar por NOMBRE (case-insensitive) — la nube ya tiene los IDs correctos
+            const cloudNames = new Set(cloudCompanies.map(c => c.name.trim().toUpperCase()));
+
+            // Mantener empresas locales que NO existen en la nube (ni por ID ni por nombre)
             const localOnly = state.companies.filter(local => 
-                local.id !== 'default' && !cloudCompanies.some(cloud => cloud.id === local.id)
+                local.id !== 'default' && 
+                !cloudCompanies.some(cloud => cloud.id === local.id) &&
+                !cloudNames.has(local.name.trim().toUpperCase())
             );
 
             // Empezar con default
             const merged = [{ id: 'default', name: 'Full Energy', logo: null, nit: 'N/A', manager: 'Sistema', phone: 'N/A', email: 'v1.0', code: 'FEA001', isActive: true }];
             
-            // Agregar empresas de la nube (actualizan cualquier versión local)
+            // Agregar empresas de la nube (son la fuente de verdad)
             cloudCompanies.forEach(c => {
                 if (c.id !== 'default') merged.push(c);
             });
 
-            // Agregar empresas que solo existen localmente (no perderlas)
+            // Agregar empresas que solo existen localmente y NO están duplicadas por nombre
             localOnly.forEach(c => merged.push(c));
 
             state.companies = merged;
