@@ -1565,15 +1565,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Restaurar botón
                     btnDownloadQr.style.display = 'flex';
 
-                    const url = canvas.toDataURL('image/png');
-                    const a = document.createElement('a');
-                    a.href = url;
                     const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                    a.download = `qr_completo_${name || 'acceso'}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    showToast && showToast('Descargando imagen completa...', 'success');
+                    const fileName = `QR_${name || 'acceso'}.png`;
+                    
+                    canvas.toBlob(function(blob) {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                    }, 'image/png');
+                    showToast && showToast('Descargando: ' + fileName, 'success');
                 }).catch(err => {
                     console.error("Error generando imagen QR:", err);
                     btnDownloadQr.style.display = 'flex';
