@@ -196,6 +196,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn("localStorage block:", err);
             }
             console.log('Empresas sincronizadas (nube + local):', state.companies.length, '| Solo-local:', localOnly.length);
+
+            // 🔑 CORRECCIÓN CRÍTICA: Si el usuario llega por QR, re-sincronizar el currentCompanyId
+            // al ID real de la empresa en la nube. El ID temporal (comp_qr_TIMESTAMP) ya no sirve.
+            if (state.isQRLogin && state.qrCode) {
+                const realCompany = state.companies.find(c => c.code === state.qrCode);
+                if (realCompany) {
+                    const oldId = state.currentCompanyId;
+                    state.currentCompanyId = realCompany.id;
+                    try {
+                        localStorage.setItem('fe_current_company', realCompany.id);
+                    } catch(e) {}
+                    console.log(`✅ QR: empresa re-sincronizada desde ID temporal "${oldId}" → ID real "${realCompany.id}" (${realCompany.name})`);
+                    // Recargar premios ya con el ID correcto
+                    loadPrizesForCompany();
+                } else {
+                    console.warn('⚠️ QR: no se encontró empresa con code=', state.qrCode, '— usando empresa temporal.');
+                }
+            }
             
             // Subir empresas solo-locales a la nube para que no se pierdan
             if (localOnly.length > 0) {
@@ -329,6 +347,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (codeParamEarly) {
             // Ocultar login de inmediato para que no se vea ni un instante
             if (loginView) loginView.classList.add('hidden');
+
+            // Guardar el code del QR para re-sincronizar después de cargar la nube
+            state.qrCode = codeParamEarly;
 
             let companyEarly = state.companies.find(c => c.code === codeParamEarly);
             if (!companyEarly && nameParamEarly) {
