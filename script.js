@@ -1552,52 +1552,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnDownloadQr) {
         btnDownloadQr.addEventListener('click', () => {
-            const name = qrCompanyName ? qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').toUpperCase() : 'QR';
-            const fileName = `QR_${name || 'ACCESO'}.png`;
-
-            // SOLUCIÓN DIRECTA Y SÍNCRONA: usar el canvas que QRCode.js ya generó
-            // Esto funciona en Safari porque es síncrono dentro del gesto del usuario
-            const qrCanvas = document.querySelector('#qrcode-display canvas');
-            if (qrCanvas) {
-                try {
-                    const dataUrl = qrCanvas.toDataURL('image/png');
-                    const a = document.createElement('a');
-                    a.href = dataUrl;
-                    a.download = fileName;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => document.body.removeChild(a), 300);
-                    showToast && showToast('✅ Descargando: ' + fileName, 'success');
-                    return;
-                } catch(e) {
-                    console.error('Error canvas directo:', e);
-                }
-            }
-
-            // Fallback: html2canvas si no hay canvas directo
             const qrCard = document.querySelector('.qr-card');
             if (qrCard && typeof html2canvas !== 'undefined') {
+                // Ocultar el botón de descarga temporalmente para la "foto"
                 btnDownloadQr.style.display = 'none';
-                html2canvas(qrCard, { backgroundColor: '#ffffff', scale: 2, logging: false, useCORS: true })
-                .then(canvas => {
+                
+                html2canvas(qrCard, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false
+                }).then(canvas => {
+                    // Restaurar botón
                     btnDownloadQr.style.display = 'flex';
-                    const dataUrl = canvas.toDataURL('image/png');
+
+                    const url = canvas.toDataURL('image/png');
                     const a = document.createElement('a');
-                    a.href = dataUrl;
-                    a.download = fileName;
-                    a.style.display = 'none';
+                    a.href = url;
+                    const name = qrCompanyName.textContent.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                    a.download = `qr_completo_${name || 'acceso'}.png`;
                     document.body.appendChild(a);
                     a.click();
-                    setTimeout(() => document.body.removeChild(a), 300);
-                    showToast && showToast('✅ Descargando: ' + fileName, 'success');
+                    document.body.removeChild(a);
+                    showToast && showToast('Descargando imagen completa...', 'success');
                 }).catch(err => {
+                    console.error("Error generando imagen QR:", err);
                     btnDownloadQr.style.display = 'flex';
-                    console.error('Error html2canvas:', err);
-                    alert('Error al descargar. Intente de nuevo.');
+                    alert("Error al descargar la imagen completa.");
                 });
             } else {
-                alert('No se encontró el código QR. Refresque la página.');
+                alert('La librería para capturar imágenes aún no ha cargado. Refresque la página.');
             }
         });
     }
