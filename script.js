@@ -868,15 +868,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (countLabel) countLabel.textContent = `Ranking de ${ranked.length} cliente${ranked.length !== 1 ? 's' : ''} con consumo`;
     }
 
-    // Cargar clientes desde Supabase y mostrarlos
+    // Cargar clientes desde Supabase y mostrarlos — FILTRADO POR EMPRESA ACTUAL
     async function loadClientsView() {
         const tbody = document.getElementById('clients-table-body');
         if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-dim);">⏳ Cargando...</td></tr>`;
 
+        // Mostrar empresa activa en el encabezado
+        const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
+        const currentCompanyName = currentCompany ? currentCompany.name : '';
+        const companyBadge = document.getElementById('clients-company-badge');
+        if (companyBadge) companyBadge.textContent = currentCompanyName ? `📍 ${currentCompanyName}` : '';
+
         try {
             const { data, error } = await supabaseClient.from('clientes').select('*').order('nombre', { ascending: true });
             if (error) throw error;
-            state.clients = data || [];
+            const allClients = data || [];
+
+            // Obtener NITs únicos que han participado en ESTA empresa
+            const nitsEnEstaEmpresa = new Set(
+                state.participants
+                    .filter(p => {
+                        const pName = (p.empresa || '');
+                        return pName === currentCompanyName ||
+                            (p.consumo && typeof p.consumo === 'string' && p.consumo.includes(`[${currentCompanyName}]`));
+                    })
+                    .map(p => normalizeNIT(p.nit || p.placa || ''))
+                    .filter(Boolean)
+            );
+
+            // Filtrar clientes: solo los que tienen participación en esta empresa
+            state.clients = allClients.filter(c => nitsEnEstaEmpresa.has(normalizeNIT(c.nit || '')));
+
+            const countLabel = document.getElementById('clients-count-label');
+            if (countLabel) {
+                countLabel.textContent = `${state.clients.length} cliente${state.clients.length !== 1 ? 's' : ''} de ${currentCompanyName}`;
+            }
+
             renderClientsTable(state.clients);
         } catch (e) {
             if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#ff4757;">Error cargando clientes: ${e.message}</td></tr>`;
