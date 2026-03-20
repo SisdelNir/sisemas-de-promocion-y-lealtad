@@ -1196,6 +1196,111 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Buscador rápido con dropdown ─────────────────────────────────────
+    const clientQuickSearch = document.getElementById('client-quick-search');
+    const clientQuickResults = document.getElementById('client-quick-search-results');
+
+    function fillFormFromClient(c) {
+        // Rellenar formulario con datos del cliente seleccionado
+        document.getElementById('client-nit').value      = c.nit     || '';
+        document.getElementById('client-nombre').value   = c.nombre  || '';
+        document.getElementById('client-telefono').value = c.telefono || '';
+        document.getElementById('client-correo').value   = c.correo  || '';
+        document.getElementById('client-nit').readOnly   = true;
+        document.getElementById('client-nit').style.opacity = '0.6';
+
+        const acc = calcAccumulatedForNit(c.nit);
+        const disp = document.getElementById('client-acumulado-display');
+        if (disp) disp.textContent = `Q ${acc.toFixed(2)}`;
+
+        clientEditingNit = c.nit;
+        document.getElementById('client-form-title').textContent = '✏️ CLIENTE ENCONTRADO — Editando';
+        document.getElementById('btn-cancel-client').style.display = 'inline-flex';
+        document.getElementById('btn-save-client').textContent = '💾 Guardar Cambios';
+
+        ['client-nombre','client-telefono','client-correo'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.borderColor = 'rgba(0,242,254,0.6)';
+        });
+
+        // Limpiar buscador y cerrar dropdown
+        if (clientQuickSearch) clientQuickSearch.value = '';
+        if (clientQuickResults) clientQuickResults.style.display = 'none';
+
+        showToast(`✓ Cliente: ${c.nombre || c.nit}`, 'success');
+    }
+
+    function showQuickSearchResults(matches) {
+        if (!clientQuickResults) return;
+        if (matches.length === 0) {
+            clientQuickResults.innerHTML = `<div style="padding:0.6rem 0.9rem; color:var(--text-dim); font-size:0.8rem;">Sin resultados</div>`;
+            clientQuickResults.style.display = 'block';
+            return;
+        }
+        clientQuickResults.innerHTML = matches.slice(0, 8).map(c => {
+            const acc = calcAccumulatedForNit(c.nit);
+            return `<div class="qs-item" data-nit="${c.nit}"
+                style="padding:0.55rem 0.9rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; transition:background 0.15s;"
+                onmouseenter="this.style.background='rgba(104,109,224,0.2)'"
+                onmouseleave="this.style.background='transparent'">
+                <div>
+                    <div style="font-weight:700; font-size:0.82rem;">${c.nombre || '—'}</div>
+                    <div style="font-size:0.72rem; color:var(--text-dim);">NIT: ${c.nit}</div>
+                </div>
+                <div style="font-size:0.78rem; font-weight:800; color:#00f2fe; white-space:nowrap;">Q ${acc.toFixed(2)}</div>
+            </div>`;
+        }).join('');
+        clientQuickResults.style.display = 'block';
+
+        // Clic en resultado → rellenar formulario
+        clientQuickResults.querySelectorAll('.qs-item').forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // evitar que blur limpie antes del clic
+                const nit = item.dataset.nit;
+                // Buscar en todos los clientes (state.clients puede estar filtrado)
+                let c = (state.clients || []).find(x => x.nit === nit);
+                if (c) fillFormFromClient(c);
+            });
+        });
+    }
+
+    if (clientQuickSearch) {
+        clientQuickSearch.addEventListener('input', async () => {
+            const q = clientQuickSearch.value.trim().toLowerCase();
+            if (q.length < 2) {
+                if (clientQuickResults) clientQuickResults.style.display = 'none';
+                return;
+            }
+
+            // Buscar primero en clientes ya cargados
+            let matches = (state.clients || []).filter(c =>
+                (c.nit     || '').toLowerCase().includes(q) ||
+                (c.nombre  || '').toLowerCase().includes(q)
+            );
+
+            // Si no hay resultados locales y parece un NIT, buscar en Supabase
+            if (matches.length === 0) {
+                try {
+                    const { data } = await supabaseClient
+                        .from('clientes')
+                        .select('*')
+                        .or(`nit.ilike.%${q}%,nombre.ilike.%${q}%`)
+                        .limit(8);
+                    matches = data || [];
+                } catch(_) {}
+            }
+
+            showQuickSearchResults(matches);
+        });
+
+        // Cerrar dropdown al perder foco
+        clientQuickSearch.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (clientQuickResults) clientQuickResults.style.display = 'none';
+            }, 150);
+        });
+    }
+
     // Botón INGRESO DE CLIENTES en el modal
     const btnIngresoClientes = document.getElementById('btn-ingreso-clientes');
     if (btnIngresoClientes) {

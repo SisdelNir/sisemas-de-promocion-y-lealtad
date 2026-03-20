@@ -436,7 +436,23 @@
 
                 <!-- Formulario agregar / editar -->
                 <div id="client-form-card" style="background:rgba(72,52,212,0.12); border:1px solid rgba(104,109,224,0.4); border-radius:16px; padding:1.2rem; margin-bottom:1.4rem;">
-                    <div style="font-size:0.8rem; font-weight:800; color:#686de0; letter-spacing:1px; margin-bottom:0.8rem;" id="client-form-title">+ NUEVO CLIENTE</div>
+
+                    <!-- Título + Buscador rápido en la misma fila -->
+                    <div style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.8rem; flex-wrap:wrap;">
+                        <div id="client-form-title" style="font-size:0.8rem; font-weight:800; color:#686de0; letter-spacing:1px; white-space:nowrap; flex-shrink:0;">+ NUEVO CLIENTE</div>
+                        <!-- Buscador -->
+                        <div style="position:relative; flex:1; min-width:160px;">
+                            <input type="text" id="client-quick-search"
+                                placeholder="&#128269; Buscar por nombre o NIT..."
+                                autocomplete="off"
+                                style="width:100%; background:rgba(0,0,0,0.35); border:1px solid rgba(104,109,224,0.5); border-radius:10px; padding:0.42rem 0.8rem; color:white; font-family:inherit; font-size:0.8rem; box-sizing:border-box;">
+                            <!-- Dropdown resultados -->
+                            <div id="client-quick-search-results"
+                                style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#1a1a2e; border:1px solid rgba(104,109,224,0.5); border-radius:10px; max-height:200px; overflow-y:auto; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;">
                         <div class="input-group" style="margin:0;">
                             <label style="font-size:0.72rem; color:var(--text-dim); font-weight:700;">NIT *</label>
