@@ -530,20 +530,29 @@
                             </button>
                         </div>
 
-                        <!-- ② BOTONES EN GRID 2 COLUMNAS — tamaño reducido ~1/3 -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 0.45rem;">
-                            <button id="btn-criteria-nav" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; text-align: center; line-height: 1.2;">&#9881;&#65039; Config.<br>Rangos Ruleta</button>
-                            <button id="btn-sisdel" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: rgba(255,255,255,0.07); color: white; border: 1px solid var(--glass-border); text-align: center; line-height: 1.2;">&#127970; SISDEL<br>Gestión Empresas</button>
-                            <button id="btn-prizes-general" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #4facfe, #00f2fe); color: #001f3f; text-align: center; line-height: 1.2;">&#127919; Premios<br>General</button>
-                            <button id="btn-prizes-plata" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #bdc3c7, #2c3e50); color: white; text-align: center; line-height: 1.2;">&#129352; Premios<br>Plata</button>
-                            <button id="btn-prizes-oro" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #f1c40f, #f39c12); color: #001f3f; text-align: center; line-height: 1.2;">&#129351; Premios<br>Oro</button>
-                            <button id="btn-history-nav-modal" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #00FF88, #00aa55); color: #001f3f; text-align: center; line-height: 1.2;">&#128203; Historial<br>Premios</button>
-                            <button id="btn-consumption-summary" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #ff9f43, #ee5253); color: white; text-align: center; line-height: 1.2;">&#128202; Consumo<br>Acumulado</button>
+                        <!-- ② INGRESO DE CLIENTES — arriba, ancho completo -->
+                        <button id="btn-ingreso-clientes" class="btn-primary" style="grid-column: 1 / -1; width:100%; font-size: 0.82rem; font-weight: 800; padding: 0.6rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #4834d4, #686de0); color: white; text-align: center; margin-bottom:0.45rem;">&#128101; INGRESO DE CLIENTES</button>
 
-                            <!-- NUEVOS BOTONES -->
-                            <button id="btn-rifas" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #e84393, #c0392b); color: white; text-align: center; line-height: 1.2;">&#127922; RIFAS</button>
-                            <button id="btn-ingreso-clientes" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #4834d4, #686de0); color: white; text-align: center; line-height: 1.2;">&#128101; Ingreso<br>de Clientes</button>
-                            <button id="btn-membresia" class="btn-primary" style="grid-column: 1 / -1; font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #00b894, #00cec9); color: #001f3f; text-align: center; line-height: 1.2;">&#128081; MEMBRESÍA</button>
+                        <!-- ③ DOS COLUMNAS: izquierda premios / derecha resto -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 0.45rem;">
+
+                            <!-- COLUMNA IZQUIERDA -->
+                            <div style="display:flex; flex-direction:column; gap:0.45rem;">
+                                <button id="btn-criteria-nav" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; text-align: center; line-height: 1.2;">&#9881;&#65039; Config.<br>Rangos Ruleta</button>
+                                <button id="btn-prizes-general" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #4facfe, #00f2fe); color: #001f3f; text-align: center; line-height: 1.2;">&#127919; Premios<br>General</button>
+                                <button id="btn-prizes-plata" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #bdc3c7, #2c3e50); color: white; text-align: center; line-height: 1.2;">&#129352; Premios<br>Plata</button>
+                                <button id="btn-prizes-oro" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #f1c40f, #f39c12); color: #001f3f; text-align: center; line-height: 1.2;">&#129351; Premios<br>Oro</button>
+                            </div>
+
+                            <!-- COLUMNA DERECHA -->
+                            <div style="display:flex; flex-direction:column; gap:0.45rem;">
+                                <button id="btn-history-nav-modal" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #00FF88, #00aa55); color: #001f3f; text-align: center; line-height: 1.2;">&#128203; Historial<br>Premios</button>
+                                <button id="btn-consumption-summary" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #ff9f43, #ee5253); color: white; text-align: center; line-height: 1.2;">&#128202; Consumo<br>Acumulado</button>
+                                <button id="btn-rifas" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #e84393, #c0392b); color: white; text-align: center; line-height: 1.2;">&#127922; RIFAS</button>
+                                <button id="btn-membresia" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: linear-gradient(135deg, #00b894, #00cec9); color: #001f3f; text-align: center; line-height: 1.2;">&#128081; MEMBRESÍA</button>
+                                <button id="btn-sisdel" class="btn-primary" style="font-size: 0.72rem; font-weight: 700; padding: 0.5rem 0.4rem; border-radius: 8px; background: rgba(255,255,255,0.07); color: white; border: 1px solid var(--glass-border); text-align: center; line-height: 1.2;">&#127970; SISDEL<br>Gestión Empresas</button>
+                            </div>
+
                         </div>
 
                         <!-- ③ SALIR al fondo, ancho completo -->
