@@ -1314,6 +1314,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Events ---
+
+    // Muestra nombre del cliente en grande en lugar del título del formulario
+    function setRegistrationClientName(nombre) {
+        const title   = document.getElementById('registration-form-title');
+        const nameDiv = document.getElementById('registration-client-name');
+        if (!title || !nameDiv) return;
+        if (nombre && nombre.trim()) {
+            title.style.display   = 'none';
+            nameDiv.style.display = 'block';
+            nameDiv.textContent   = nombre.trim();
+        } else {
+            title.style.display   = '';
+            nameDiv.style.display = 'none';
+            nameDiv.textContent   = '';
+        }
+    }
+
     if (nitInput) {
         nitInput.addEventListener('input', () => {
             const nit = nitInput.value.trim().toUpperCase();
@@ -1324,6 +1341,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!nit || nit === 'C/F') {
                 pilotNameInput.value = '';
                 if (phoneInput) phoneInput.value = '';
+                setRegistrationClientName(null); // restaurar título
                 // En QR: mostrar campos nombre/teléfono para C/F o vacío
                 if (state.isQRLogin) {
                     const nameField = document.getElementById('qr-field-name');
@@ -1417,6 +1435,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                     showToast('✓ Cliente frecuente detectado', 'success');
                 }
+                // Mostrar nombre del cliente en el título
+                setRegistrationClientName(existing.piloto ? existing.piloto.split(' (NIT:')[0] : null);
                 qrClientFound = true;
             }
 
@@ -1487,6 +1507,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         pilotNameInput.classList.remove('highlight-autofill');
                         if (phoneInput) phoneInput.classList.remove('highlight-autofill');
                     }, 2000);
+                    // Mostrar nombre del cliente en el título
+                    setRegistrationClientName(data.nombre);
                     showToast('✓ Cliente sincronizado desde la nube', 'success');
                 }
             } catch (err) {
