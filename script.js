@@ -1483,18 +1483,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Búsqueda en vivo a la nube al salir del campo (Si no se encontró localmente)
         nitInput.addEventListener('blur', async () => {
-            const nit = nitInput.value.trim().toUpperCase();
-            if (!nit || nit === 'C/F') return;
+            const nitRaw = nitInput.value.trim().toUpperCase();
+            if (!nitRaw || nitRaw === 'C/F') return;
 
             // Autocompletar desde la nube si faltan datos en los campos locales
             if (pilotNameInput.value && pilotNameInput.value.trim() !== '' && phoneInput && phoneInput.value.trim() !== '') return;
 
             try {
-                const { data, error } = await supabaseClient
+                // Preparar variantes del NIT para buscar con o sin guión
+                const nitNorm   = normalizeNIT(nitRaw);            // solo dígitos
+                const nitConGuion = nitNorm.length > 1             // formato 1234567-8
+                    ? nitNorm.slice(0, -1) + '-' + nitNorm.slice(-1)
+                    : nitRaw;
+
+                // Buscar por NIT exacto (tal como se escribió), con guión, o sin guión
+                let data = null, error = null;
+
+                // Intento 1: búsqueda en la nube por las variantes más comunes
+                const { data: rows, error: err } = await supabaseClient
                     .from('clientes')
-                    .select('nombre, telefono')
-                    .eq('nit', nit)
-                    .maybeSingle();
+                    .select('nombre, telefono, nit')
+                    .or(`nit.eq.${nitRaw},nit.eq.${nitConGuion},nit.eq.${nitNorm}`)
+                    .limit(5);
+
+                error = err;
+                if (!err && rows && rows.length > 0) {
+                    // Tomar el primero cuyo NIT normalizado coincida
+                    data = rows.find(r => normalizeNIT(r.nit) === nitNorm) || rows[0];
+                }
 
                 if (!error && data) {
                     if (!pilotNameInput.value) pilotNameInput.value = data.nombre || '';
@@ -1515,6 +1531,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Silencioso, si no existe o falla la red, el usuario simplemente sigue escribiendo manual
             }
         });
+
     }
 
     if (totalConsumptionInput) {
