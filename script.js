@@ -742,7 +742,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (view === 'clients') {
                 const cv = document.getElementById('clients-view');
                 if (cv) cv.classList.remove('hidden');
-                loadClientsView();
+                // El listado se carga solo cuando el usuario presiona "Ver Listado"
+                const panel = document.getElementById('clients-list-panel');
+                if (panel) panel.style.display = 'none';
+                const btn = document.getElementById('btn-toggle-clients-list');
+                if (btn) { btn.textContent = '📋 Ver Listado'; btn.style.color = '#a29bfe'; }
             }
         }
     }
@@ -1165,15 +1169,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Botón TOGGLE: mostrar/ocultar listado de clientes
+    let _clientsListLoaded = false;
+    const btnToggleClientsList = document.getElementById('btn-toggle-clients-list');
+    if (btnToggleClientsList) {
+        btnToggleClientsList.addEventListener('click', async () => {
+            const panel = document.getElementById('clients-list-panel');
+            if (!panel) return;
+
+            const isVisible = panel.style.display !== 'none';
+            if (isVisible) {
+                // Ocultar
+                panel.style.display = 'none';
+                btnToggleClientsList.textContent = '📋 Ver Listado';
+                btnToggleClientsList.style.color = '#a29bfe';
+            } else {
+                // Mostrar — cargar datos si es la primera vez
+                panel.style.display = 'block';
+                btnToggleClientsList.textContent = '🙈 Ocultar Listado';
+                btnToggleClientsList.style.color = '#00f2fe';
+                if (!_clientsListLoaded) {
+                    _clientsListLoaded = true;
+                    await loadClientsView();
+                }
+            }
+        });
+    }
+
     // Botón INGRESO DE CLIENTES en el modal
     const btnIngresoClientes = document.getElementById('btn-ingreso-clientes');
     if (btnIngresoClientes) {
         btnIngresoClientes.addEventListener('click', () => {
             settingsModal.classList.add('hidden');
             resetClientForm();
+            _clientsListLoaded = false; // resetear para recargar al abrir listado
             showView('clients');
         });
     }
+
 
     // --- Events ---
     if (nitInput) {
