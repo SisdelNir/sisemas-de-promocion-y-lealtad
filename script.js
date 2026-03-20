@@ -782,12 +782,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const countLabel = document.getElementById('clients-count-label');
         if (!tbody) return;
 
+        const allClients = clients || state.clients || [];
         const q = filter.trim().toLowerCase();
         const filtered = q
-            ? clients.filter(c =>
+            ? allClients.filter(c =>
                 (c.nit || '').toLowerCase().includes(q) ||
                 (c.nombre || '').toLowerCase().includes(q))
-            : clients;
+            : allClients;
 
         if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-dim);">No se encontraron clientes.</td></tr>`;
@@ -815,6 +816,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (countLabel) countLabel.textContent = `${filtered.length} cliente${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`;
+    }
+
+    // Ranking de clientes: ordenado por acumulado descendente
+    function renderClientsRanking() {
+        const tbody = document.getElementById('clients-table-body');
+        const countLabel = document.getElementById('clients-count-label');
+        if (!tbody) return;
+
+        const allClients = state.clients || [];
+        // Calcular acumulado para cada uno y ordenar
+        const ranked = allClients
+            .map(c => ({ ...c, acc: calcAccumulatedForNit(c.nit) }))
+            .filter(c => c.acc > 0)  // solo los que tienen consumo
+            .sort((a, b) => b.acc - a.acc);
+
+        if (ranked.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-dim);">Sin datos de consumo para mostrar ranking.</td></tr>`;
+            if (countLabel) countLabel.textContent = '';
+            return;
+        }
+
+        const maxAcc = ranked[0].acc;
+        const medals = ['🥇','🥈','🥉'];
+
+        tbody.innerHTML = '';
+        ranked.forEach((c, idx) => {
+            const pct = maxAcc > 0 ? (c.acc / maxAcc * 100).toFixed(1) : 0;
+            const medal = idx < 3 ? medals[idx] : `#${idx + 1}`;
+            const barColor = idx === 0 ? '#f1c40f' : idx === 1 ? '#bdc3c7' : idx === 2 ? '#cd6133' : '#686de0';
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.innerHTML = `
+                <td style="padding:0.55rem 0.7rem; font-size:1.1rem; text-align:center; width:2rem;">${medal}</td>
+                <td style="padding:0.55rem 0.7rem; font-weight:700;">${c.nombre || c.nit}</td>
+                <td style="padding:0.55rem 0.7rem; color:var(--text-dim); font-size:0.78rem;">${c.nit}</td>
+                <td style="padding:0.55rem 0.7rem; color:var(--text-dim); font-size:0.78rem;">${c.telefono || '—'}</td>
+                <td style="padding:0.55rem 0.7rem; text-align:right;">
+                    <div style="font-weight:900; color:#00f2fe; font-size:0.95rem;">Q ${c.acc.toFixed(2)}</div>
+                    <div style="height:5px; background:rgba(255,255,255,0.08); border-radius:3px; margin-top:3px; overflow:hidden;">
+                        <div style="height:100%; width:${pct}%; background:${barColor}; border-radius:3px; transition:width 0.8s ease;"></div>
+                    </div>
+                </td>
+                <td style="padding:0.55rem 0.5rem; text-align:center; white-space:nowrap;">
+                    <button onclick="editClient('${c.nit}')" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);border:none;border-radius:6px;color:white;padding:0.3rem 0.65rem;font-size:0.72rem;font-weight:700;cursor:pointer;">✏️ Editar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        if (countLabel) countLabel.textContent = `Ranking de ${ranked.length} cliente${ranked.length !== 1 ? 's' : ''} con consumo`;
     }
 
     // Cargar clientes desde Supabase y mostrarlos
@@ -946,7 +997,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Botón RECARGAR
     const btnRefreshClients = document.getElementById('btn-refresh-clients');
-    if (btnRefreshClients) btnRefreshClients.addEventListener('click', loadClientsView);
+    if (btnRefreshClients) btnRefreshClients.addEventListener('click', () => {
+        state.clientsViewMode = 'list';
+        updateClientsViewMode();
+        loadClientsView();
+    });
+
+    // Botón RANKING — toggle entre lista y ranking
+    let _clientsViewMode = 'list'; // 'list' | 'ranking'
+    function updateClientsViewMode() {
+        const btnRanking = document.getElementById('btn-ranking-clients');
+        if (!btnRanking) return;
+        if (_clientsViewMode === 'ranking') {
+            btnRanking.textContent = '📋 Ver Lista';
+            btnRanking.style.background = 'linear-gradient(135deg,#686de0,#4834d4)';
+            btnRanking.style.color = 'white';
+            renderClientsRanking();
+        } else {
+            btnRanking.textContent = '🏆 Ranking';
+            btnRanking.style.background = 'linear-gradient(135deg,#f1c40f,#f39c12)';
+            btnRanking.style.color = '#001f3f';
+            renderClientsTable(state.clients);
+        }
+    }
+
+    const btnRankingClients = document.getElementById('btn-ranking-clients');
+    if (btnRankingClients) {
+        btnRankingClients.addEventListener('click', () => {
+            _clientsViewMode = _clientsViewMode === 'ranking' ? 'list' : 'ranking';
+            updateClientsViewMode();
+        });
+    }
+
 
     // Botón CERRAR vista clientes
     const btnCloseClients = document.getElementById('btn-close-clients');
@@ -1546,6 +1628,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Guardar con función robusta
             const recordToSave = { ...state.currentParticipant };
             const saved = await saveParticipantRecord(recordToSave);
+
+            // ── AUTO-SYNC CLIENTES: guardar/actualizar datos en tabla clientes ──
+            if (saved) {
+                const nit = recordToSave.piloto !== 'C/F' ? (recordToSave.nit || recordToSave.placa) : null;
+                if (nit && nit !== 'C/F') {
+                    try {
+                        const clientRec = { nit: nit.toUpperCase(), nombre: recordToSave.piloto, telefono: recordToSave.telefono || null };
+                        await supabaseClient.from('clientes').upsert([clientRec], { onConflict: 'nit', ignoreDuplicates: false });
+                        console.log(`✅ Cliente auto-sincronizado: ${nit}`);
+                    } catch(syncErr) { console.warn('Auto-sync clientes (no crítico):', syncErr.message); }
+                }
+            }
 
             if (!saved) {
                 // Respaldo local
