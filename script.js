@@ -655,6 +655,8 @@ document.addEventListener('DOMContentLoaded', () => {
         qrView.classList.add('hidden');
         consumptionView.classList.add('hidden');
         criteriaManagementView.classList.add('hidden');
+        const clientsView = document.getElementById('clients-view');
+        if (clientsView) clientsView.classList.add('hidden');
         appHeader.classList.add('hidden');
         
         // Controlar visibilidad del engranaje:
@@ -734,12 +736,243 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderConsumptionSummary();
             } else if (view === 'criteria_config') {
                 criteriaManagementView.classList.remove('hidden');
-                // Poblar valores actuales
                 document.getElementById('criteria-oro').value = state.criteria.oro;
                 document.getElementById('criteria-plata').value = state.criteria.plata;
                 document.getElementById('criteria-general').value = state.criteria.general;
+            } else if (view === 'clients') {
+                const cv = document.getElementById('clients-view');
+                if (cv) cv.classList.remove('hidden');
+                loadClientsView();
             }
         }
+    }
+
+    // ============================================================
+    // MÓDULO: INGRESO DE CLIENTES
+    // ============================================================
+    let clientEditingNit = null; // NIT del cliente que se está editando (null = nuevo)
+
+    // Calcula el total acumulado de un NIT en el período del evento para la empresa actual
+    function calcAccumulatedForNit(nit) {
+        if (!nit || nit === 'C/F') return 0;
+        const nitNorm = normalizeNIT(nit);
+        const currentCompany = state.companies.find(c => c.id === state.currentCompanyId);
+        const currentCompanyName = currentCompany ? currentCompany.name : '';
+        const startStr = state.eventPeriod.start || '0000-01-01';
+        const endStr   = state.eventPeriod.end   || '9999-12-31';
+
+        return state.participants
+            .filter(p => {
+                const pNit = normalizeNIT(p.nit || p.placa || '');
+                if (!pNit || pNit !== nitNorm) return false;
+                const isSame = (p.empresa === currentCompanyName) ||
+                    (p.consumo && p.consumo.includes(`[${currentCompanyName}]`));
+                if (!isSame) return false;
+                const pDateObj = safeParseDate(p.created_at || p.fecha);
+                const pad = n => n.toString().padStart(2, '0');
+                const pDateStr = `${pDateObj.getFullYear()}-${pad(pDateObj.getMonth()+1)}-${pad(pDateObj.getDate())}`;
+                return pDateStr >= startStr && pDateStr <= endStr;
+            })
+            .reduce((sum, p) => sum + cleanAmount(p.consumo), 0);
+    }
+
+    // Render de la tabla de clientes
+    function renderClientsTable(clients, filter = '') {
+        const tbody = document.getElementById('clients-table-body');
+        const countLabel = document.getElementById('clients-count-label');
+        if (!tbody) return;
+
+        const q = filter.trim().toLowerCase();
+        const filtered = q
+            ? clients.filter(c =>
+                (c.nit || '').toLowerCase().includes(q) ||
+                (c.nombre || '').toLowerCase().includes(q))
+            : clients;
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-dim);">No se encontraron clientes.</td></tr>`;
+            if (countLabel) countLabel.textContent = '';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        filtered.forEach(c => {
+            const acc = calcAccumulatedForNit(c.nit);
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.innerHTML = `
+                <td style="padding:0.6rem 0.7rem; font-weight:700; color:var(--primary); white-space:nowrap;">${c.nit || ''}</td>
+                <td style="padding:0.6rem 0.7rem;">${c.nombre || ''}</td>
+                <td style="padding:0.6rem 0.7rem; color:var(--text-dim);">${c.telefono || '—'}</td>
+                <td style="padding:0.6rem 0.7rem; color:var(--text-dim); font-size:0.78rem;">${c.correo || '—'}</td>
+                <td style="padding:0.6rem 0.7rem; text-align:right; font-weight:900; color:#00f2fe;">Q ${acc.toFixed(2)}</td>
+                <td style="padding:0.6rem 0.5rem; text-align:center; white-space:nowrap;">
+                    <button onclick="editClient('${c.nit}')" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);border:none;border-radius:6px;color:white;padding:0.3rem 0.65rem;font-size:0.72rem;font-weight:700;cursor:pointer;margin-right:4px;">✏️ Editar</button>
+                    <button onclick="deleteClient('${c.nit}')" style="background:linear-gradient(135deg,#e84393,#c0392b);border:none;border-radius:6px;color:white;padding:0.3rem 0.65rem;font-size:0.72rem;font-weight:700;cursor:pointer;">🗑️ Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        if (countLabel) countLabel.textContent = `${filtered.length} cliente${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`;
+    }
+
+    // Cargar clientes desde Supabase y mostrarlos
+    async function loadClientsView() {
+        const tbody = document.getElementById('clients-table-body');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-dim);">⏳ Cargando...</td></tr>`;
+
+        try {
+            const { data, error } = await supabaseClient.from('clientes').select('*').order('nombre', { ascending: true });
+            if (error) throw error;
+            state.clients = data || [];
+            renderClientsTable(state.clients);
+        } catch (e) {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#ff4757;">Error cargando clientes: ${e.message}</td></tr>`;
+        }
+    }
+
+    // Exponer funciones globales para los botones inline de la tabla
+    window.editClient = function(nit) {
+        const c = state.clients.find(x => x.nit === nit);
+        if (!c) return;
+        clientEditingNit = nit;
+
+        document.getElementById('client-nit').value    = c.nit || '';
+        document.getElementById('client-nombre').value = c.nombre || '';
+        document.getElementById('client-telefono').value = c.telefono || '';
+        document.getElementById('client-correo').value = c.correo || '';
+        document.getElementById('client-nit').readOnly = true; // NIT no se puede cambiar al editar
+        document.getElementById('client-nit').style.opacity = '0.6';
+
+        const acc = calcAccumulatedForNit(nit);
+        const disp = document.getElementById('client-acumulado-display');
+        if (disp) disp.textContent = `Q ${acc.toFixed(2)}`;
+
+        document.getElementById('client-form-title').textContent = '✏️ EDITANDO CLIENTE';
+        document.getElementById('btn-cancel-client').style.display = 'inline-flex';
+        document.getElementById('btn-save-client').textContent = '💾 Guardar Cambios';
+
+        document.getElementById('client-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showToast('Editando cliente: ' + (c.nombre || nit), 'success');
+    };
+
+    window.deleteClient = async function(nit) {
+        const c = state.clients.find(x => x.nit === nit);
+        const name = c ? c.nombre : nit;
+        if (!confirm(`⚠️ ¿Eliminar al cliente "${name}" (NIT: ${nit})?\n\nEsta acción NO se puede deshacer.`)) return;
+        try {
+            const { error } = await supabaseClient.from('clientes').delete().eq('nit', nit);
+            if (error) throw error;
+            showToast(`🗑️ Cliente "${name}" eliminado.`, 'success');
+            await loadClientsView();
+        } catch (e) {
+            showToast('Error al eliminar: ' + e.message, 'error');
+        }
+    };
+
+    // Resetear formulario
+    function resetClientForm() {
+        clientEditingNit = null;
+        document.getElementById('client-nit').value    = '';
+        document.getElementById('client-nombre').value = '';
+        document.getElementById('client-telefono').value = '';
+        document.getElementById('client-correo').value = '';
+        document.getElementById('client-nit').readOnly = false;
+        document.getElementById('client-nit').style.opacity = '1';
+        document.getElementById('client-acumulado-display').textContent = 'Q 0.00';
+        document.getElementById('client-form-title').textContent = '+ NUEVO CLIENTE';
+        document.getElementById('btn-cancel-client').style.display = 'none';
+        document.getElementById('btn-save-client').textContent = '💾 Guardar Cliente';
+    }
+
+    // Actualizar acumulado en tiempo real al escribir el NIT en el formulario
+    const clientNitInput = document.getElementById('client-nit');
+    if (clientNitInput) {
+        clientNitInput.addEventListener('input', () => {
+            const nit = clientNitInput.value.trim();
+            const acc = calcAccumulatedForNit(nit);
+            const disp = document.getElementById('client-acumulado-display');
+            if (disp) disp.textContent = `Q ${acc.toFixed(2)}`;
+        });
+    }
+
+    // Botón GUARDAR cliente
+    const btnSaveClient = document.getElementById('btn-save-client');
+    if (btnSaveClient) {
+        btnSaveClient.addEventListener('click', async () => {
+            const nit    = document.getElementById('client-nit').value.trim().toUpperCase();
+            const nombre = document.getElementById('client-nombre').value.trim();
+            const tel    = document.getElementById('client-telefono').value.trim();
+            const correo = document.getElementById('client-correo').value.trim();
+
+            if (!nit || !nombre) {
+                showToast('⚠️ NIT y Nombre son obligatorios.', 'error');
+                return;
+            }
+
+            try {
+                btnSaveClient.disabled = true;
+                btnSaveClient.textContent = '⏳ Guardando...';
+
+                // Intentar con correo; si falla por columna missing, reintenta sin él
+                const record = { nit, nombre, telefono: tel || null, correo: correo || null };
+                let { error } = await supabaseClient.from('clientes').upsert([record], { onConflict: 'nit' });
+
+                if (error && (error.message.includes('correo') || error.message.includes('column'))) {
+                    // Columna correo no existe aún → guardar sin ella
+                    const rec2 = { nit, nombre, telefono: tel || null };
+                    const res2 = await supabaseClient.from('clientes').upsert([rec2], { onConflict: 'nit' });
+                    error = res2.error;
+                }
+
+                if (error) throw error;
+
+                showToast(`✅ Cliente "${nombre}" guardado correctamente.`, 'success');
+                resetClientForm();
+                await loadClientsView();
+            } catch (e) {
+                showToast('Error al guardar: ' + e.message, 'error');
+            } finally {
+                btnSaveClient.disabled = false;
+                btnSaveClient.textContent = clientEditingNit ? '💾 Guardar Cambios' : '💾 Guardar Cliente';
+            }
+        });
+    }
+
+    // Botón CANCELAR edición
+    const btnCancelClient = document.getElementById('btn-cancel-client');
+    if (btnCancelClient) btnCancelClient.addEventListener('click', resetClientForm);
+
+    // Botón RECARGAR
+    const btnRefreshClients = document.getElementById('btn-refresh-clients');
+    if (btnRefreshClients) btnRefreshClients.addEventListener('click', loadClientsView);
+
+    // Botón CERRAR vista clientes
+    const btnCloseClients = document.getElementById('btn-close-clients');
+    if (btnCloseClients) {
+        btnCloseClients.addEventListener('click', () => {
+            showView('registration');
+            settingsModal.classList.remove('hidden');
+        });
+    }
+
+    // Buscador en tiempo real
+    const clientSearch = document.getElementById('client-search');
+    if (clientSearch) {
+        clientSearch.addEventListener('input', () => {
+            renderClientsTable(state.clients, clientSearch.value);
+        });
+    }
+
+    // Botón INGRESO DE CLIENTES en el modal
+    const btnIngresoClientes = document.getElementById('btn-ingreso-clientes');
+    if (btnIngresoClientes) {
+        btnIngresoClientes.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+            resetClientForm();
+            showView('clients');
+        });
     }
 
     // --- Events ---

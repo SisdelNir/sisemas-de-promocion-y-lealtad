@@ -423,6 +423,83 @@
                     </div>
                 </div>
             </section>
+
+            <!-- ===== VISTA: INGRESO DE CLIENTES ===== -->
+            <section id="clients-view" class="card fade-in hidden" style="position:relative; max-width:900px; margin:0 auto; width:100%;">
+                <div class="view-header" style="margin-bottom:1.2rem;">
+                    <h2 style="color:var(--primary); font-size:1.4rem;">&#128101; Gestión de Clientes</h2>
+                    <div class="view-actions">
+                        <button id="btn-close-clients" class="btn-secondary" style="margin:0;">&#8592; Volver</button>
+                    </div>
+                </div>
+
+                <!-- Formulario agregar / editar -->
+                <div id="client-form-card" style="background:rgba(72,52,212,0.12); border:1px solid rgba(104,109,224,0.4); border-radius:16px; padding:1.2rem; margin-bottom:1.4rem;">
+                    <div style="font-size:0.8rem; font-weight:800; color:#686de0; letter-spacing:1px; margin-bottom:0.8rem;" id="client-form-title">+ NUEVO CLIENTE</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.7rem;">
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.72rem; color:var(--text-dim); font-weight:700;">NIT *</label>
+                            <input type="text" id="client-nit" placeholder="Ej. 1234567-8" autocomplete="off"
+                                style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:0.6rem 0.8rem; color:white; font-family:inherit; font-size:0.9rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.72rem; color:var(--text-dim); font-weight:700;">NOMBRE *</label>
+                            <input type="text" id="client-nombre" placeholder="Nombre completo"
+                                style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:0.6rem 0.8rem; color:white; font-family:inherit; font-size:0.9rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.72rem; color:var(--text-dim); font-weight:700;">TELÉFONO</label>
+                            <input type="tel" id="client-telefono" placeholder="Ej. 5555-4444"
+                                style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:0.6rem 0.8rem; color:white; font-family:inherit; font-size:0.9rem;">
+                        </div>
+                        <div class="input-group" style="margin:0;">
+                            <label style="font-size:0.72rem; color:var(--text-dim); font-weight:700;">CORREO</label>
+                            <input type="email" id="client-correo" placeholder="correo@ejemplo.com"
+                                style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:0.6rem 0.8rem; color:white; font-family:inherit; font-size:0.9rem;">
+                        </div>
+                        <div class="input-group" style="margin:0; grid-column:1/-1;">
+                            <label style="font-size:0.72rem; color:#00f2fe; font-weight:800; letter-spacing:1px;">TOTAL ACUMULADO (automático)</label>
+                            <div id="client-acumulado-display"
+                                style="background:rgba(0,242,254,0.08); border:1px solid rgba(0,242,254,0.3); border-radius:10px; padding:0.6rem 0.8rem; color:#00f2fe; font-size:1.3rem; font-weight:900; text-align:center; letter-spacing:2px;">
+                                Q 0.00
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.6rem; margin-top:0.9rem; justify-content:flex-end;">
+                        <button id="btn-cancel-client" class="btn-secondary" style="padding:0.5rem 1.2rem; font-size:0.8rem; margin:0; display:none;">Cancelar</button>
+                        <button id="btn-save-client" class="btn-primary" style="padding:0.5rem 1.4rem; font-size:0.9rem; font-weight:800; background:linear-gradient(135deg,#4834d4,#686de0);">
+                            &#128190; Guardar Cliente
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buscador rápido -->
+                <div style="display:flex; gap:0.6rem; margin-bottom:0.8rem; align-items:center;">
+                    <input type="text" id="client-search" placeholder="&#128269; Buscar por NIT o nombre..."
+                        style="flex:1; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:0.55rem 0.9rem; color:white; font-family:inherit; font-size:0.88rem;">
+                    <button id="btn-refresh-clients" class="btn-primary" style="padding:0.55rem 1rem; font-size:0.82rem; white-space:nowrap;">&#8635; Recargar</button>
+                </div>
+
+                <!-- Tabla de clientes -->
+                <div class="table-container" style="max-height:380px; overflow-y:auto;">
+                    <table id="clients-table" style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+                        <thead>
+                            <tr style="background:rgba(72,52,212,0.25); position:sticky; top:0; z-index:2;">
+                                <th style="padding:0.65rem 0.7rem; text-align:left; color:#686de0; font-weight:800; white-space:nowrap;">NIT</th>
+                                <th style="padding:0.65rem 0.7rem; text-align:left; color:#686de0; font-weight:800;">NOMBRE</th>
+                                <th style="padding:0.65rem 0.7rem; text-align:left; color:#686de0; font-weight:800;">TELÉFONO</th>
+                                <th style="padding:0.65rem 0.7rem; text-align:left; color:#686de0; font-weight:800;">CORREO</th>
+                                <th style="padding:0.65rem 0.7rem; text-align:right; color:#00f2fe; font-weight:800; white-space:nowrap;">ACUMULADO</th>
+                                <th style="padding:0.65rem 0.7rem; text-align:center; color:#686de0; font-weight:800;">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body">
+                            <tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-dim);">Cargando clientes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="clients-count-label" style="font-size:0.72rem; color:var(--text-dim); text-align:right; margin-top:0.5rem;"></div>
+            </section>
         </main>
 
         <!-- Settings Modal -->
