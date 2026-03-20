@@ -964,16 +964,107 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-save-client').textContent = '💾 Guardar Cliente';
     }
 
-    // Actualizar acumulado en tiempo real al escribir el NIT en el formulario
+    // ── Auto-lookup al escribir NIT en formulario de clientes ──────────────
     const clientNitInput = document.getElementById('client-nit');
     if (clientNitInput) {
+
+        // Mientras escribe: calcular acumulado + buscar en datos locales
         clientNitInput.addEventListener('input', () => {
-            const nit = clientNitInput.value.trim();
+            const nit = clientNitInput.value.trim().toUpperCase();
+
+            // Acumulado en tiempo real
             const acc = calcAccumulatedForNit(nit);
             const disp = document.getElementById('client-acumulado-display');
             if (disp) disp.textContent = `Q ${acc.toFixed(2)}`;
+
+            if (!nit || nit.length < 2) {
+                // Si borró el NIT, limpiar campos pero mantener modo nuevo
+                if (!clientEditingNit) {
+                    document.getElementById('client-nombre').value = '';
+                    document.getElementById('client-telefono').value = '';
+                    document.getElementById('client-correo').value = '';
+                    document.getElementById('client-form-title').textContent = '+ NUEVO CLIENTE';
+                    document.getElementById('btn-cancel-client').style.display = 'none';
+                    document.getElementById('btn-save-client').textContent = '💾 Guardar Cliente';
+                }
+                return;
+            }
+
+            // Buscar en clientes ya cargados en memoria (todos, no solo de empresa)
+            const found = (state.clients || []).find(c =>
+                normalizeNIT(c.nit || '') === normalizeNIT(nit)
+            );
+
+            if (found) {
+                // Cliente ya existe → rellenar campos y modo EDITAR
+                clientEditingNit = found.nit;
+                document.getElementById('client-nombre').value   = found.nombre   || '';
+                document.getElementById('client-telefono').value = found.telefono || '';
+                document.getElementById('client-correo').value   = found.correo   || '';
+                document.getElementById('client-form-title').textContent = '✏️ CLIENTE ENCONTRADO — Editando';
+                document.getElementById('btn-cancel-client').style.display = 'inline-flex';
+                document.getElementById('btn-save-client').textContent = '💾 Guardar Cambios';
+
+                // Resaltar campos rellenos
+                ['client-nombre','client-telefono','client-correo'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.style.borderColor = 'rgba(0,242,254,0.6)'; }
+                });
+            } else {
+                // NIT nuevo → modo NUEVO
+                if (clientEditingNit) {
+                    // Venía de editar otro → limpiar modo edición
+                    clientEditingNit = null;
+                    document.getElementById('client-nombre').value = '';
+                    document.getElementById('client-telefono').value = '';
+                    document.getElementById('client-correo').value = '';
+                }
+                document.getElementById('client-form-title').textContent = '✨ NUEVO CLIENTE';
+                document.getElementById('btn-cancel-client').style.display = 'none';
+                document.getElementById('btn-save-client').textContent = '💾 Guardar Cliente';
+                ['client-nombre','client-telefono','client-correo'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.borderColor = '';
+                });
+            }
+        });
+
+        // Al salir del campo: si no encontró localmente, consultar Supabase
+        clientNitInput.addEventListener('blur', async () => {
+            const nit = clientNitInput.value.trim().toUpperCase();
+            if (!nit || clientEditingNit) return; // ya encontrado o ya editando
+
+            // Solo buscar en nube si no está en memoria
+            const inMemory = (state.clients || []).find(c =>
+                normalizeNIT(c.nit || '') === normalizeNIT(nit)
+            );
+            if (inMemory) return;
+
+            try {
+                const { data } = await supabaseClient
+                    .from('clientes')
+                    .select('*')
+                    .eq('nit', nit)
+                    .maybeSingle();
+
+                if (data) {
+                    // Encontrado en nube aunque no esté en la lista filtrada de empresa
+                    clientEditingNit = data.nit;
+                    document.getElementById('client-nombre').value   = data.nombre   || '';
+                    document.getElementById('client-telefono').value = data.telefono || '';
+                    document.getElementById('client-correo').value   = data.correo   || '';
+                    document.getElementById('client-form-title').textContent = '✏️ CLIENTE ENCONTRADO — Editando';
+                    document.getElementById('btn-cancel-client').style.display = 'inline-flex';
+                    document.getElementById('btn-save-client').textContent = '💾 Guardar Cambios';
+                    const acc = calcAccumulatedForNit(nit);
+                    const disp = document.getElementById('client-acumulado-display');
+                    if (disp) disp.textContent = `Q ${acc.toFixed(2)}`;
+                    showToast(`✓ Cliente encontrado: ${data.nombre}`, 'success');
+                }
+            } catch(_) { /* sin conexión, continuar */ }
         });
     }
+
 
     // Botón GUARDAR cliente
     const btnSaveClient = document.getElementById('btn-save-client');
